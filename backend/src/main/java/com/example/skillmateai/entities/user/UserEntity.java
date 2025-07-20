@@ -28,7 +28,7 @@ public class UserEntity {
 
     @NonNull
     private String firstName;
-    
+
     private String lastName;
 
     private boolean isVerified;

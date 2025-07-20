@@ -6,7 +6,6 @@ import com.example.skillmateai.services.user.UserService;
 import com.example.skillmateai.services.user.UserVerificationService;
 import com.example.skillmateai.utilities.CreateResponseUtil;
 import com.example.skillmateai.utilities.JwtUtil;
-import com.example.skillmateai.utilities.MatchTextPatternUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -35,8 +34,6 @@ public class AuthenticationController {
     @Autowired
     private CreateResponseUtil createResponseUtil;
 
-    @Autowired
-    private MatchTextPatternUtil matchTextPatternUtil;
 
     @Autowired
     private UserVerificationService userVerificationService;
@@ -57,11 +54,6 @@ public class AuthenticationController {
 
                 return ResponseEntity.badRequest()
                         .body(createResponseUtil.createResponseBody(false, "Email, password or first name is empty"));
-
-            }else if(!matchTextPatternUtil.isValidEmail(userEntity.getEmail())){
-
-                return ResponseEntity.badRequest()
-                        .body(createResponseUtil.createResponseBody(false, "This email address is not valid. You must use a JUST edu email"));
 
             }else if(userEntity.getPassword().length() < 8 || userEntity.getPassword().length() > 50){
 
