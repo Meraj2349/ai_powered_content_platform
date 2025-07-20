@@ -18,9 +18,9 @@ public class UserPreferencesEntity {
     private String userEmail;
     private String preferredLanguage;
     private String preferredTheme;
-    private String profilePictureUrl;
     private boolean pushNotificationsEnabled;
     private boolean emailNotificationsEnabled;
     private boolean subscribedToNewsletter;
+
 
 }

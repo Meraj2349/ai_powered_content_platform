@@ -52,8 +52,8 @@ public class AuthenticationController {
                         .body(createResponseUtil.createResponseBody(false, "Request body is required"));
             }
 
-            if(userEntity.getEmail() == null || userEntity.getPassword() == null || userEntity.getName() == null ||
-               userEntity.getEmail().isEmpty() || userEntity.getPassword().isEmpty() || userEntity.getName().isEmpty()){
+            if(userEntity.getEmail() == null || userEntity.getPassword() == null || userEntity.getFirstName() == null ||
+               userEntity.getEmail().isEmpty() || userEntity.getPassword().isEmpty() || userEntity.getFirstName().isEmpty()){
 
                 return ResponseEntity.badRequest()
                         .body(createResponseUtil.createResponseBody(false, "Email, password or first name is empty"));
