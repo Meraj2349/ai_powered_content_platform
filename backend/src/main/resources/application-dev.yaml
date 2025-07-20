@@ -1,0 +1,32 @@
+server:
+  port: ${SERVER_PORT}
+
+spring:
+  data:
+    mongodb:
+      #      uri: ${MONGODB_URI}
+      database: ${MONGODB_DATABASE_NAME}
+      auto-index-creation: ${MONGODB_AUTO_INDEX_CREATION}
+      port: ${MONGODB_PORT}
+      host: ${MONGODB_HOST}
+
+
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_AUTH}
+          starttls:
+            enable: ${MAIL_STARTTLS}
+
+
+app:
+  jwtKey: ${JWT_KEY}
+  refreshTokenKey: ${REFRESH_TOKEN_KEY}
+  cors:
+    allowed-origin-1: ${CORS_ALLOWED_ORIGIN_1}
+
