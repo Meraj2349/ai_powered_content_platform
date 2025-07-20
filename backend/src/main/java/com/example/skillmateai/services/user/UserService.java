@@ -70,16 +70,18 @@ public class UserService {
     public UserEntity createUser(UserEntity userEntity, Boolean isVerified) throws Exception{
         try{
             log.info("Creating new user with email: {}", userEntity.getEmail());
-            
+
+            userEntity.setId(GenerateAndValidateStringUtil.generateUniqueString());
             userEntity.setAccountEnabled(true);
             userEntity.setVerified(isVerified);
-//            userEntity.setUserVerificationEntityId(userVerificationService.createUserVerificationEntity(userEntity.getEmail()).getId());
+            userEntity.setIsBlocked(false);
+            userVerificationService.createUserVerificationEntity(userEntity.getEmail());
             userEntity.setPassword(passwordEncoder.encode(userEntity.getPassword()));
             userEntity.setRoles(new ArrayList<>(Arrays.asList("USER")));
-            userEntity.setUserCreationTime(Instant.now().getEpochSecond());
-            userEntity.setUserTokensId(new ArrayList<>());
-            userEntity.setBalance(0);
-            
+            userEntity.setCreatedAt(Instant.now().getEpochSecond());
+            userEntity.setUpdatedAt(Instant.now().getEpochSecond());
+
+
             UserEntity createdUser = userRepository.save(userEntity);
             log.info("Successfully created user with email: {}", userEntity.getEmail());
             
@@ -137,21 +139,24 @@ public class UserService {
     }
 
     @Transactional
-    public ResponseEntity<Object> updateName(String newName) throws Exception {
+    public ResponseEntity<Object> updateName(String newFirstName, String newLastName) throws Exception {
         try{
             UserEntity authenticatedUser = getAuthenticatedUserUtil.getAuthenticatedUser();
             log.info("Name update attempt for user: {}", authenticatedUser.getEmail());
 
-            if(newName == null || newName.trim().isEmpty()){
+            if(newFirstName == null || newFirstName.trim().isEmpty()){
                 log.warn("Name update failed - empty name provided for user: {}", authenticatedUser.getEmail());
                 return ResponseEntity.badRequest()
                         .body(createResponseUtil.createResponseBody(false, "Name cannot be empty"));
             }else{
-                String oldName = authenticatedUser.getName();
-                authenticatedUser.setName(newName.trim());
+                String oldFirstName = authenticatedUser.getFirstName();
+                String oldLastName = authenticatedUser.getLastName();
+
+                authenticatedUser.setFirstName(newFirstName.trim());
+                authenticatedUser.setLastName(newLastName.trim());
                 userRepository.save(authenticatedUser);
                 log.info("Name successfully updated for user: {} from '{}' to '{}'", 
-                    authenticatedUser.getEmail(), oldName, newName.trim());
+                    authenticatedUser.getEmail(), oldFirstName, newFirstName.trim());
                 return ResponseEntity.ok().body(createResponseUtil.createResponseBody(true, "Name successfully updated"));
             }
 

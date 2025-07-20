@@ -91,7 +91,7 @@ public class UserController {
                         .body(createResponseUtil.createResponseBody(false, "Request body is required"));
             }
             
-            return userService.updateName(request.getNewName());
+            return userService.updateName(request.getNewFirstName(), request.getNewLastName());
 
         } catch (Exception e) {
             log.error(e.getMessage());
