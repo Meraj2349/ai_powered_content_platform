@@ -27,16 +27,17 @@ public class UserEntity {
     private String password;
 
     @NonNull
-    private String name;
+    private String firstName;
+    
+    private String lastName;
 
     private boolean isVerified;
     private boolean isAccountEnabled;
-    private long userCreationTime;
-
-    private long balance;
-
-    private ArrayList<String> userTokensId;
-
+    private Boolean isBlocked;
+    private String profilePictureUrl;
+    private String firebaseUid;
+    private long createdAt;
+    private long updatedAt;
     private ArrayList<String> roles;
 
 

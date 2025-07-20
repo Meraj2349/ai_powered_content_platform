@@ -34,9 +34,6 @@ public class UserVerificationService {
     @Autowired
     private CreateResponseUtil createResponseUtil;
 
-    @Autowired
-    private GetAuthenticatedUserUtil getAuthenticatedUserUtil;
-
     public UserVerificationEntity createUserVerificationEntity(String userEmail){
         UserVerificationEntity userVerificationEntity =
                 new UserVerificationEntity(GenerateAndValidateStringUtil.generateUniqueString(), userEmail, "", Instant.now());
