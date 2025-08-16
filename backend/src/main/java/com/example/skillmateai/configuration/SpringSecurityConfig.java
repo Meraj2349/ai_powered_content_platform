@@ -1,7 +1,7 @@
 package com.example.skillmateai.configuration;
 
-import com.example.skillmateai.filters.JwtFilter;
-import com.example.skillmateai.services.user.UserDetailsServiceImpl;
+import com.example.skillmateai.user.filters.JwtFilter;
+import com.example.skillmateai.user.services.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -49,6 +49,8 @@ public class SpringSecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Make API stateless
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/user/**").hasRole("USER")
+                        .requestMatchers("/api/v1/content/**").hasRole("USER")
                         .requestMatchers("/api/v1/public/**").permitAll()
                         .requestMatchers("/api/v1/auth/login").permitAll()
                         .requestMatchers("/api/v1/auth/signup").permitAll()
