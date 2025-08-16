@@ -54,6 +54,21 @@ public class UserController {
         }
     }
 
+    @GetMapping("profile")
+    public ResponseEntity<Object> getLoggedInUserProfile() {
+        try {
+            UserEntity authenticatedUser = getAuthenticatedUserUtil.getAuthenticatedUser();
+
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(createResponseUtil.createResponseBody(true, "User profile found", "userProfile", createResponseUtil.createExtendedUserInfoMap(authenticatedUser)));
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return ResponseEntity.internalServerError()
+                    .body(createResponseUtil.createResponseBody(false, "An error occurred while fetching user profile"));
+        }
+    }
+
     @Transactional
     @DeleteMapping("delete")
     public ResponseEntity<Object> deleteLoggedInUser() {

@@ -16,6 +16,11 @@ import java.util.ArrayList;
 @AllArgsConstructor
 public class UserEntity {
 
+    public UserEntity() {
+        this.enrolledCoursePaths = new ArrayList<>();
+        this.createdCoursePaths = new ArrayList<>();
+    }
+
     @Id
     private String id;
 
@@ -40,6 +45,7 @@ public class UserEntity {
     private long updatedAt;
     private ArrayList<String> roles;
     private ArrayList<String> enrolledCoursePaths; // Course path IDs user has enrolled in
+    private ArrayList<String> createdCoursePaths; // Course path IDs user has created
 
 
 }

@@ -34,7 +34,7 @@ public class CoursePathService {
     private final GetAuthenticatedUserUtil getAuthenticatedUserUtil;
     private final UserRepository userRepository;
 
-    @Value("${ai.analyzer.base-url:http://localhost:8000}")
+    @Value("${aiAnalyzer.baseUrl}")
     private String aiAnalyzerBaseUrl;
 
     private final RestTemplate restTemplate = new RestTemplate();
@@ -122,12 +122,19 @@ public class CoursePathService {
                     .description((String) coursePathMap.get("description"))
                     .targetLevel((String) coursePathMap.get("targetLevel"))
                     .createdAt(System.currentTimeMillis())
-                    .createdBy(user.getEmail())
+                    .createdBy(user.getFirstName())
                     .topics(topicEntities.stream().map(TopicEntity::getId).collect(Collectors.toList()))
                     .reviews(new ArrayList<>())
                     .averageRating(0.0)
                     .build();
             coursePathRepository.save(coursePath);
+
+            // Update user's created course paths list
+            if(user.getCreatedCoursePaths() == null){
+                user.setCreatedCoursePaths(new ArrayList<>());
+            }
+            user.getCreatedCoursePaths().add(coursePath.getId());
+            userRepository.save(user);
 
             List<ProgressEntry> progressEntries = topicEntities.stream().map(te -> ProgressEntry.builder()
                     .topicId(te.getId())
@@ -157,13 +164,31 @@ public class CoursePathService {
         }
     }
 
-    public List<CoursePathEntity> getMyCoursePaths(){
+    public Map<String,Object> getMyCoursePaths(){
         try {
             UserEntity user = getAuthenticatedUserUtil.getAuthenticatedUser();
             if(user == null){
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
             }
-            return coursePathRepository.findByCreatorId(user.getId());
+            
+            // Get created course paths
+            List<String> createdCourseIds = user.getCreatedCoursePaths() != null ? user.getCreatedCoursePaths() : new ArrayList<>();
+            List<CoursePathEntity> createdCoursePaths = new ArrayList<>();
+            if(!createdCourseIds.isEmpty()){
+                createdCoursePaths = coursePathRepository.findAllById(createdCourseIds);
+            }
+            
+            // Get enrolled course paths  
+            List<String> enrolledCourseIds = user.getEnrolledCoursePaths() != null ? user.getEnrolledCoursePaths() : new ArrayList<>();
+            List<CoursePathEntity> enrolledCoursePaths = new ArrayList<>();
+            if(!enrolledCourseIds.isEmpty()){
+                enrolledCoursePaths = coursePathRepository.findAllById(enrolledCourseIds);
+            }
+            
+            Map<String,Object> response = new HashMap<>();
+            response.put("createdCoursePaths", createdCoursePaths);
+            response.put("enrolledCoursePaths", enrolledCoursePaths);
+            return response;
         } catch (ResponseStatusException e){
             throw e;
         } catch (Exception e){
@@ -226,23 +251,11 @@ public class CoursePathService {
         }
     }
 
-    public UserCourseProgressEntity getUserProgress(String coursePathId){
-        try {
-            UserEntity user = getAuthenticatedUserUtil.getAuthenticatedUser();
-            if(user == null){
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
-            }
-            
-            return userCourseProgressRepository.findByUserIdAndCoursePathId(user.getId(), coursePathId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No progress found for this course path"));
-        } catch (ResponseStatusException e){
-            throw e;
-        } catch (Exception e){
-            log.error("Unexpected error fetching user progress: {}", e.getMessage(), e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal error fetching progress");
-        }
-    }
 
+
+    // EXPERIMENTAL - DISABLED: Duplicate check functionality
+    // This method is currently experimental and not recommended for production use
+    /*
     public Map<String,Object> generateAndPersistCoursePathWithDuplicateCheck(String subject, String difficulty){
         try {
             UserEntity user = getAuthenticatedUserUtil.getAuthenticatedUser();
@@ -253,16 +266,44 @@ public class CoursePathService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Subject and difficulty are required");
             }
 
-            // Check for existing similar course paths
-            List<CoursePathEntity> existingCourses = searchSimilarCoursePaths(subject + " " + difficulty);
-            if(!existingCourses.isEmpty()){
+            // Check for existing similar course paths using multiple search strategies
+            List<CoursePathEntity> existingCourses = new ArrayList<>();
+            
+            // Search by subject only
+            existingCourses.addAll(searchSimilarCoursePaths(subject));
+            
+            // Search by subject + difficulty combined
+            existingCourses.addAll(searchSimilarCoursePaths(subject + " " + difficulty));
+            
+            // Search by difficulty + subject combined
+            existingCourses.addAll(searchSimilarCoursePaths(difficulty + " " + subject));
+            
+            // Remove duplicates and filter by relevance
+            List<CoursePathEntity> uniqueExisting = existingCourses.stream()
+                    .distinct()
+                    .filter(course -> {
+                        String title = course.getTitle().toLowerCase();
+                        String subjectLower = subject.toLowerCase();
+                        String difficultyLower = difficulty.toLowerCase();
+                        
+                        // Consider it a duplicate if title contains both subject and difficulty
+                        // or if it's very similar to the subject
+                        return title.contains(subjectLower) && 
+                               (title.contains(difficultyLower) || course.getTargetLevel().toLowerCase().contains(difficultyLower));
+                    })
+                    .collect(Collectors.toList());
+            
+            if(!uniqueExisting.isEmpty()){
+                log.info("Found {} similar course paths for subject: {}, difficulty: {}", uniqueExisting.size(), subject, difficulty);
                 Map<String,Object> response = new HashMap<>();
-                response.put("existingCourse", existingCourses.get(0));
-                response.put("message", "Similar course path already exists");
+                response.put("existingCourse", uniqueExisting.get(0));
+                response.put("similarCoursesCount", uniqueExisting.size());
+                response.put("message", "Similar course path already exists. Consider enrolling in an existing course instead.");
                 return response;
             }
 
-            // Generate new course path
+            // No duplicates found, generate new course path
+            log.info("No similar course paths found, generating new course for subject: {}, difficulty: {}", subject, difficulty);
             return generateAndPersistCoursePath(subject, difficulty);
         } catch (ResponseStatusException e){
             throw e;
@@ -271,7 +312,11 @@ public class CoursePathService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal error generating course path");
         }
     }
+    */
 
+    // EXPERIMENTAL - DISABLED: Search similar course paths functionality
+    // This method is currently experimental and not recommended for production use
+    /*
     public List<CoursePathEntity> searchSimilarCoursePaths(String query){
         try {
             if(query == null || query.isBlank()){
@@ -282,20 +327,32 @@ public class CoursePathService {
             String cleanQuery = query.toLowerCase().replaceAll("[^a-zA-Z0-9\\s]", "");
             String[] terms = cleanQuery.split("\\s+");
             
-            // Build regex pattern for fuzzy matching
-            StringBuilder regexBuilder = new StringBuilder();
-            for(int i = 0; i < terms.length; i++){
-                if(i > 0) regexBuilder.append(".*");
-                regexBuilder.append(terms[i]);
-            }
-            String regexPattern = ".*" + regexBuilder.toString() + ".*";
+            // Try multiple search strategies for better duplicate detection
+            List<CoursePathEntity> results = new ArrayList<>();
             
-            return coursePathRepository.findByTitleRegex(regexPattern);
+            // Strategy 1: Exact phrase matching with flexible spacing
+            String exactPhrase = String.join(".*", terms);
+            String exactPattern = ".*" + exactPhrase + ".*";
+            results.addAll(coursePathRepository.findByTitleRegex(exactPattern));
+            
+            // Strategy 2: Individual term matching (any term matches)
+            for(String term : terms) {
+                if(term.length() >= 3) { // Only search for meaningful terms
+                    results.addAll(coursePathRepository.findByTitleContainingIgnoreCase(term));
+                }
+            }
+            
+            // Strategy 3: Remove duplicates and return
+            return results.stream()
+                    .distinct()
+                    .collect(Collectors.toList());
+                    
         } catch (Exception e){
             log.error("Unexpected error searching course paths: {}", e.getMessage(), e);
             return new ArrayList<>();
         }
     }
+    */
 
     public Map<String,Object> addReviewToCoursePath(String coursePathId, Integer rating, String comment){
         try {
@@ -354,74 +411,26 @@ public class CoursePathService {
         }
     }
 
-    public TopicEntity getTopicById(String topicId){
-        try {
-            return topicRepository.findById(topicId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
-        } catch (ResponseStatusException e){
-            throw e;
-        } catch (Exception e){
-            log.error("Unexpected error fetching topic: {}", e.getMessage(), e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal error fetching topic");
-        }
-    }
-
-    public Map<String,Object> toggleTopicCoveredStatus(String progressId, String topicId){
+    public CoursePathEntity getCoursePathById(String coursePathId){
         try {
             UserEntity user = getAuthenticatedUserUtil.getAuthenticatedUser();
             if(user == null){
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
             }
             
-            // Find the progress entity
-            UserCourseProgressEntity progress = userCourseProgressRepository.findById(progressId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Progress not found"));
-            
-            // Verify that this progress belongs to the authenticated user
-            if(!progress.getUserId().equals(user.getId())){
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You don't have permission to modify this progress");
+            Optional<CoursePathEntity> coursePathOpt = coursePathRepository.findById(coursePathId);
+            if(coursePathOpt.isEmpty()){
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Course path not found");
             }
             
-            // Find the specific topic in the progress
-            ProgressEntry targetEntry = null;
-            for(ProgressEntry entry : progress.getProgress()){
-                if(entry.getTopicId().equals(topicId)){
-                    targetEntry = entry;
-                    break;
-                }
-            }
-            
-            if(targetEntry == null){
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found in this progress");
-            }
-            
-            // Toggle the covered status
-            boolean previousStatus = targetEntry.isCovered();
-            targetEntry.setCovered(!previousStatus);
-            targetEntry.setLastUpdated(System.currentTimeMillis());
-            
-            // Calculate new readiness percentage
-            long coveredCount = progress.getProgress().stream().mapToLong(entry -> entry.isCovered() ? 1 : 0).sum();
-            int newReadiness = (int) ((coveredCount * 100) / progress.getProgress().size());
-            progress.setReadiness(newReadiness);
-            
-            userCourseProgressRepository.save(progress);
-            
-            String action = !previousStatus ? "marked as covered" : "unmarked";
-            Map<String,Object> response = new HashMap<>();
-            response.put("topicId", topicId);
-            response.put("progressId", progressId);
-            response.put("action", action);
-            response.put("isCovered", !previousStatus);
-            response.put("newReadiness", newReadiness);
-            response.put("coveredTopics", coveredCount);
-            response.put("totalTopics", progress.getProgress().size());
-            return response;
+            return coursePathOpt.get();
         } catch (ResponseStatusException e){
             throw e;
         } catch (Exception e){
-            log.error("Unexpected error toggling topic covered status: {}", e.getMessage(), e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal error toggling topic covered status");
+            log.error("Unexpected error fetching course path by ID: {}", e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal error fetching course path");
         }
     }
+
+
 }

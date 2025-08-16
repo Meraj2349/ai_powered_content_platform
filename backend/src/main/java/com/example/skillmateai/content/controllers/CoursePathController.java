@@ -12,9 +12,11 @@ import com.example.skillmateai.content.services.CoursePathService;
 import com.example.skillmateai.content.utilities.CreateContentResponseUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,8 +26,11 @@ import java.util.Map;
 @Slf4j
 public class CoursePathController {
 
-    private final CoursePathService coursePathService;
-    private final CreateContentResponseUtil createContentResponseUtil;
+    @Autowired
+    private CoursePathService coursePathService;
+
+    @Autowired
+    private CreateContentResponseUtil createContentResponseUtil;
 
     @PostMapping("/generate")
     public ResponseEntity<Map<String,Object>> generateCoursePath(@RequestBody GenerateCoursePathRequest request){
@@ -53,22 +58,7 @@ public class CoursePathController {
         }
     }
 
-//    @PostMapping("/generate/public")
-//    public ResponseEntity<Map<String,Object>> generateCoursePathPublic(@RequestBody GenerateCoursePathRequest request){
-//        try {
-//            if(request == null){
-//                return ResponseEntity.badRequest().body(createContentResponseUtil.basic(false, "Request body is required"));
-//            }
-//            Map<String,Object> data = coursePathService.generateCoursePathNoAuth(request.getSubject(), request.getDifficulty());
-//            return ResponseEntity.ok(createContentResponseUtil.withData(true, "Course path generated", "data", data));
-//        } catch (org.springframework.web.server.ResponseStatusException e){
-//            return ResponseEntity.status(e.getStatusCode())
-//                    .body(createContentResponseUtil.basic(false, e.getReason() == null ? "Request failed" : e.getReason()));
-//        } catch (Exception e){
-//            log.error("Error generating public course path: {}", e.getMessage(), e);
-//            return ResponseEntity.internalServerError().body(createContentResponseUtil.basic(false, "An error occurred while generating course path"));
-//        }
-//    }
+
 
     @GetMapping("/mine")
     public ResponseEntity<Map<String,Object>> getMyCoursePaths(){
@@ -79,9 +69,24 @@ public class CoursePathController {
                 return verificationResult;
             }
             
-            List<CoursePathEntity> list = coursePathService.getMyCoursePaths();
-            List<Map<String,Object>> summaryList = createContentResponseUtil.createCoursePathSummaryList(list);
-            return ResponseEntity.ok(createContentResponseUtil.withData(true, "Fetched course paths", "coursePaths", summaryList));
+            Map<String,Object> coursePathsData = coursePathService.getMyCoursePaths();
+            
+            // Extract created and enrolled course paths
+            @SuppressWarnings("unchecked")
+            List<CoursePathEntity> createdCoursePaths = (List<CoursePathEntity>) coursePathsData.get("createdCoursePaths");
+            @SuppressWarnings("unchecked") 
+            List<CoursePathEntity> enrolledCoursePaths = (List<CoursePathEntity>) coursePathsData.get("enrolledCoursePaths");
+            
+            // Create summary lists for both
+            List<Map<String,Object>> createdSummaryList = createContentResponseUtil.createCoursePathSummaryList(createdCoursePaths);
+            List<Map<String,Object>> enrolledSummaryList = createContentResponseUtil.createCoursePathSummaryList(enrolledCoursePaths);
+            
+            // Build response with both lists
+            Map<String,Object> responseData = new HashMap<>();
+            responseData.put("createdCoursePaths", createdSummaryList);
+            responseData.put("enrolledCoursePaths", enrolledSummaryList);
+            
+            return ResponseEntity.ok(createContentResponseUtil.withData(true, "Fetched user course paths", "userCoursePaths", responseData));
         } catch (org.springframework.web.server.ResponseStatusException e){
             return ResponseEntity.status(e.getStatusCode())
                     .body(createContentResponseUtil.basic(false, e.getReason() == null ? "Request failed" : e.getReason()));
@@ -114,26 +119,9 @@ public class CoursePathController {
         }
     }
 
-    @GetMapping("/progress/{coursePathId}")
-    public ResponseEntity<Map<String,Object>> getUserProgress(@PathVariable String coursePathId){
-        try {
-            // Check user verification
-            ResponseEntity<Map<String, Object>> verificationResult = createContentResponseUtil.validateUserVerification();
-            if (verificationResult != null) {
-                return verificationResult;
-            }
-            
-            UserCourseProgressEntity progress = coursePathService.getUserProgress(coursePathId);
-            return ResponseEntity.ok(createContentResponseUtil.withData(true, "Fetched user progress", "progress", progress));
-        } catch (org.springframework.web.server.ResponseStatusException e){
-            return ResponseEntity.status(e.getStatusCode())
-                    .body(createContentResponseUtil.basic(false, e.getReason() == null ? "Request failed" : e.getReason()));
-        } catch (Exception e){
-            log.error("Error fetching user progress: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(createContentResponseUtil.basic(false, "An error occurred while fetching progress"));
-        }
-    }
-
+    // EXPERIMENTAL - DISABLED: Generate course path with duplicate check endpoint
+    // This endpoint is currently experimental and not recommended for production use
+    /*
     @PostMapping("/generate/check-duplicate")
     public ResponseEntity<Map<String,Object>> generateCoursePathWithDuplicateCheck(@RequestBody GenerateCoursePathRequest request){
         try {
@@ -158,13 +146,12 @@ public class CoursePathController {
             log.error("Error generating course path with duplicate check: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().body(createContentResponseUtil.basic(false, "An error occurred while generating course path"));
         }
-
-
-
-
-
     }
+    */
 
+    // EXPERIMENTAL - DISABLED: Search course paths endpoint
+    // This endpoint is currently experimental and not recommended for production use
+    /*
     @GetMapping("/search")
     public ResponseEntity<Map<String,Object>> searchCoursePaths(@RequestParam String query){
         try {
@@ -185,6 +172,7 @@ public class CoursePathController {
             return ResponseEntity.internalServerError().body(createContentResponseUtil.basic(false, "An error occurred while searching"));
         }
     }
+    */
 
     @PostMapping("/review")
     public ResponseEntity<Map<String,Object>> addReview(@RequestBody AddReviewRequest request){
@@ -215,8 +203,8 @@ public class CoursePathController {
         }
     }
 
-    @GetMapping("/topic/{topicId}")
-    public ResponseEntity<Map<String,Object>> getTopicInfo(@PathVariable String topicId){
+    @GetMapping("/{coursePathId}")
+    public ResponseEntity<Map<String,Object>> getCoursePathById(@PathVariable String coursePathId){
         try {
             // Check user verification
             ResponseEntity<Map<String, Object>> verificationResult = createContentResponseUtil.validateUserVerification();
@@ -224,43 +212,20 @@ public class CoursePathController {
                 return verificationResult;
             }
             
-            TopicEntity topic = coursePathService.getTopicById(topicId);
-            return ResponseEntity.ok(createContentResponseUtil.withData(true, "Topic fetched successfully", "topic", topic));
+            if(coursePathId == null || coursePathId.isBlank()){
+                return ResponseEntity.badRequest().body(createContentResponseUtil.basic(false, "Course path ID is required"));
+            }
+            
+            CoursePathEntity coursePath = coursePathService.getCoursePathById(coursePathId);
+            return ResponseEntity.ok(createContentResponseUtil.withData(true, "Course path fetched successfully", "coursePath", coursePath));
         } catch (org.springframework.web.server.ResponseStatusException e){
             return ResponseEntity.status(e.getStatusCode())
                     .body(createContentResponseUtil.basic(false, e.getReason() == null ? "Request failed" : e.getReason()));
         } catch (Exception e){
-            log.error("Error fetching topic: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(createContentResponseUtil.basic(false, "An error occurred while fetching topic"));
+            log.error("Error fetching course path: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(createContentResponseUtil.basic(false, "An error occurred while fetching course path"));
         }
     }
 
-    @PostMapping("progress/toggle-topic-status")
-    public ResponseEntity<Map<String,Object>> toggleTopicCoveredStatus(@RequestBody ToggleTopicStatusRequest request){
-        try {
-            // Check user verification
-            ResponseEntity<Map<String, Object>> verificationResult = createContentResponseUtil.validateUserVerification();
-            if (verificationResult != null) {
-                return verificationResult;
-            }
-            
-            if(request == null){
-                return ResponseEntity.badRequest().body(createContentResponseUtil.basic(false, "Request body is required"));
-            }
-            if(request.getProgressId() == null || request.getProgressId().isBlank()){
-                return ResponseEntity.badRequest().body(createContentResponseUtil.basic(false, "Progress ID is required"));
-            }
-            if(request.getTopicId() == null || request.getTopicId().isBlank()){
-                return ResponseEntity.badRequest().body(createContentResponseUtil.basic(false, "Topic ID is required"));
-            }
-            Map<String,Object> data = coursePathService.toggleTopicCoveredStatus(request.getProgressId(), request.getTopicId());
-            return ResponseEntity.ok(createContentResponseUtil.withData(true, "Topic status toggled successfully", "data", data));
-        } catch (org.springframework.web.server.ResponseStatusException e){
-            return ResponseEntity.status(e.getStatusCode())
-                    .body(createContentResponseUtil.basic(false, e.getReason() == null ? "Request failed" : e.getReason()));
-        } catch (Exception e){
-            log.error("Error toggling topic status: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(createContentResponseUtil.basic(false, "An error occurred while toggling topic status"));
-        }
-    }
+
 }

@@ -67,6 +67,25 @@ public class CreateResponseUtil {
         }
     }
 
+    public Map<String,Object> createExtendedUserInfoMap(UserEntity user) {
+        try {
+            Map<String, Object> userMap = new HashMap<>();
+            userMap.put("email", user.getEmail());
+            userMap.put("firstName", user.getFirstName());
+            userMap.put("lastName", user.getLastName());
+            userMap.put("isVerified", user.isVerified());
+            userMap.put("isAccountEnabled", user.isAccountEnabled());
+            userMap.put("isBlocked", user.getIsBlocked());
+            userMap.put("enrolledCoursePaths", user.getEnrolledCoursePaths() != null ? user.getEnrolledCoursePaths() : new ArrayList<>());
+            userMap.put("createdCoursePaths", user.getCreatedCoursePaths() != null ? user.getCreatedCoursePaths() : new ArrayList<>());
+            return userMap;
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return null;
+        }
+    }
+
 
 
 

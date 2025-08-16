@@ -81,6 +81,8 @@ public class UserService {
             userEntity.setRoles(new ArrayList<>(Arrays.asList("USER")));
             userEntity.setCreatedAt(System.currentTimeMillis());
             userEntity.setUpdatedAt(System.currentTimeMillis());
+            userEntity.setEnrolledCoursePaths(new ArrayList<>());
+            userEntity.setCreatedCoursePaths(new ArrayList<>());
 
 
             UserEntity createdUser = userRepository.save(userEntity);

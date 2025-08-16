@@ -1,0 +1,48 @@
+# -----------------------
+# Python
+# -----------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.pyc
+
+# -----------------------
+# Environment & Secrets
+# -----------------------
+.env
+*.env
+
+# -----------------------
+# Virtual Environments
+# -----------------------
+venv/
+env/
+.venv/
+.env/
+
+# -----------------------
+# IDE / Editor files
+# -----------------------
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+*.iml
+
+# Other IDEs
+*.sublime-project
+*.sublime-workspace
+
+# -----------------------
+# OS generated files
+# -----------------------
+.DS_Store
+Thumbs.db
+
+
+#docs
+API_Documentation.md
