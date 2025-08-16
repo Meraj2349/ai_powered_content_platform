@@ -1,21 +1,21 @@
 # Core Web Framework
-fastapi==0.109.2
-uvicorn[standard]==0.27.1
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
 
 # API and HTTP
-requests==2.31.0
+requests==2.32.3
 
 # Data Models and Validation
-pydantic==2.6.1
+pydantic==2.9.2
 
 # Environment Variables
 python-dotenv==1.0.1
 
 # Google AI (Gemini)
-google-generativeai==0.4.1
+google-generativeai==0.7.2
 
 # YouTube Data Extraction
-yt-dlp==2024.2.27
+yt-dlp==2024.8.6
 
 # Standard Library Dependencies (included with Python)
 # json - built-in
