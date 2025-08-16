@@ -4,16 +4,7 @@ from typing import List, Dict, Any
 
 
 def get_youtube_videos_for_topics(topics: List[str], subject: str = "") -> List[Dict[str, Any]]:
-    """
-    Search YouTube for each topic and get top 5 videos with detailed information.
-    
-    Args:
-        topics (List[str]): List of topics to search for on YouTube
-        subject (str): The subject name to prepend to topic searches (optional)
-    
-    Returns:
-        List[Dict[str, Any]]: Array of dictionaries where each dict contains topic name and its videos
-    """
+
     
     all_topics_data = []
     
@@ -60,17 +51,7 @@ def get_youtube_videos_for_topics(topics: List[str], subject: str = "") -> List[
 
 
 def search_youtube_videos(topic: str, ydl_opts: Dict, subject: str = "") -> List[Dict[str, Any]]:
-    """
-    Search YouTube for a specific topic and return top 5 videos with detailed info.
-    
-    Args:
-        topic (str): The topic to search for
-        ydl_opts (Dict): yt-dlp configuration options
-        subject (str): The subject name to prepend to search query (optional)
-    
-    Returns:
-        List[Dict[str, Any]]: List of video information dictionaries
-    """
+
     
     # Create search query with subject prefix if provided
     if subject and subject.strip():
@@ -139,16 +120,7 @@ def extract_video_details(video_data: Dict, ydl: yt_dlp.YoutubeDL) -> Dict[str, 
 
 
 def extract_subtitles_text(video_info: Dict) -> str:
-    """
-    Extract actual subtitle text from video info.
-    
-    Args:
-        video_info (Dict): Full video information from yt-dlp
-    
-    Returns:
-        str: Complete subtitle text or 'N/A' if not available
-    """
-    
+
     import requests
     
     # Try to get subtitles or automatic subtitles
@@ -249,12 +221,7 @@ def clean_subtitle_text(raw_content: str) -> str:
 
 
 def print_videos_data(videos_data: List[Dict[str, Any]]) -> None:
-    """
-    Print the structured videos data in a readable format.
-    
-    Args:
-        videos_data (List[Dict[str, Any]]): Array of topic dictionaries with videos
-    """
+
     
     print("\n" + "="*80)
     print("YOUTUBE VIDEOS DATA FOR ALL TOPICS")
@@ -296,9 +263,7 @@ def print_videos_data(videos_data: List[Dict[str, Any]]) -> None:
 
 # Example usage and test function
 def test_with_sample_topics():
-    """
-    Test function with sample topics.
-    """
+
     sample_topics = [
         "functions tutorial",
         "loops explained", 

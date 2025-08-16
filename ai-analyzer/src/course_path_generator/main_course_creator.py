@@ -1,11 +1,4 @@
-"""
-Main orchestrator file that combines all three modules to create a complete learning course path.
 
-This file integrates:
-1. get_topics.py - Generate learning topics using Gemini
-2. get_youtube_videos.py - Fetch YouTube videos for each topic
-3. create_course_path.py - Analyze videos and create structured course path
-"""
 
 import json
 import time
@@ -18,17 +11,7 @@ from src.course_path_generator.create_course_path import create_course_path, pri
 
 
 def fetch_and_analyze_topics_individually(topics: list[str], subject: str, difficulty_level: str) -> list[Dict[str, Any]]:
-    """
-    Fetch videos for each topic and immediately analyze with Gemini.
-    
-    Args:
-        topics (list[str]): List of topics to process
-        subject (str): Subject name
-        difficulty_level (str): Difficulty level
-    
-    Returns:
-        list[Dict[str, Any]]: List of analyzed topic structures
-    """
+
     
     # Import required modules
     from src.course_path_generator.get_youtube_videos import search_youtube_videos
@@ -164,18 +147,7 @@ def create_complete_course(subject: str, difficulty_level: str) -> Dict[str, Any
 
 
 def save_course_to_file(course_path: Dict[str, Any], subject: str, difficulty_level: str) -> str:
-    """
-    Save the generated course path to a JSON file.
-    
-    Args:
-        course_path (Dict[str, Any]): The complete course path
-        subject (str): Subject name for filename
-        difficulty_level (str): Difficulty level for filename
-    
-    Returns:
-        str: Path to the saved file
-    """
-    
+
     # Create filename
     safe_subject = subject.replace(' ', '_').replace('/', '_').lower()
     filename = f"course_{safe_subject}_{difficulty_level}.json"

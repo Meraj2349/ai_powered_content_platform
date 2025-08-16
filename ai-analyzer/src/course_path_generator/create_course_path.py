@@ -9,17 +9,7 @@ import google.generativeai as genai
 load_dotenv()
 
 def create_course_path(videos_data: List[Dict[str, Any]], subject: str, difficulty_level: str) -> Dict[str, Any]:
-    """
-    Analyze YouTube videos for each topic and create a structured course path using Gemini.
-    
-    Args:
-        videos_data (List[Dict[str, Any]]): Array of topic dictionaries from get_youtube_videos_for_topics
-        subject (str): The subject name (e.g., "Python Programming", "Machine Learning")
-        difficulty_level (str): The difficulty level ("beginner", "intermediate", "advanced")
-    
-    Returns:
-        Dict[str, Any]: Structured course path with analyzed video recommendations
-    """
+
     
     # Configure Gemini API
     api_key = os.getenv('GEMINI_API_KEY')
@@ -88,19 +78,7 @@ def create_course_path(videos_data: List[Dict[str, Any]], subject: str, difficul
 
 
 def analyze_topic_videos_with_gemini(model, topic_name: str, videos: List[Dict], subject: str, difficulty_level: str) -> Dict[str, Any]:
-    """
-    Use Gemini to analyze videos for a specific topic and recommend the best one.
-    
-    Args:
-        model: Gemini model instance
-        topic_name (str): Name of the topic
-        videos (List[Dict]): List of video dictionaries
-        subject (str): Subject name
-        difficulty_level (str): Difficulty level
-    
-    Returns:
-        Dict[str, Any]: Analysis result with best video recommendation
-    """
+
     
     # Prepare video information for Gemini
     videos_info = []
@@ -179,17 +157,7 @@ Respond with ONLY the JSON object, no additional text."""
 
 
 def create_topic_structure(topic_name: str, analysis: Dict[str, Any], index: int) -> Dict[str, Any]:
-    """
-    Create the final topic structure from Gemini analysis.
-    
-    Args:
-        topic_name (str): Name of the topic
-        analysis (Dict[str, Any]): Analysis result from Gemini
-        index (int): Topic index for ordering
-    
-    Returns:
-        Dict[str, Any]: Structured topic data
-    """
+
     
     selected_video = analysis.get('selectedVideo', {})
     
@@ -234,15 +202,7 @@ def create_topic_structure(topic_name: str, analysis: Dict[str, Any], index: int
 
 
 def generate_tags_from_topic(topic_name: str) -> List[str]:
-    """
-    Generate relevant tags from topic name.
-    
-    Args:
-        topic_name (str): Name of the topic
-    
-    Returns:
-        List[str]: List of relevant tags
-    """
+
     
     # Simple tag generation - extract key words
     import re
@@ -259,12 +219,7 @@ def generate_tags_from_topic(topic_name: str) -> List[str]:
 
 
 def print_course_path(course_path: Dict[str, Any]) -> None:
-    """
-    Print the course path in a readable format.
-    
-    Args:
-        course_path (Dict[str, Any]): The structured course path
-    """
+
     
     if not course_path.get('success'):
         print("❌ Course path creation failed")
