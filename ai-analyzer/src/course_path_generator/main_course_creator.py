@@ -27,7 +27,7 @@ def fetch_and_analyze_topics_individually(topics: list[str], subject: str, diffi
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel('gemini-2.0-flash-exp')
     
-    # Configure yt-dlp options for video fetching
+    # Configure yt-dlp options for video fetching with anti-detection
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
@@ -36,6 +36,24 @@ def fetch_and_analyze_topics_individually(topics: list[str], subject: str, diffi
         'writeautomaticsub': True,
         'subtitleslangs': ['en'],
         'skip_download': True,
+        
+        # Anti-detection measures
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'referer': 'https://www.youtube.com/',
+        'headers': {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-us,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.7',
+            'Keep-Alive': '300',
+            'Connection': 'keep-alive',
+        },
+        'sleep_interval': 1,
+        'max_sleep_interval': 5,
+        'retries': 3,
+        'fragment_retries': 3,
+        'format': 'best',
+        'noplaylist': True,
     }
     
     analyzed_topics = []

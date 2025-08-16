@@ -1,6 +1,21 @@
 import yt_dlp
 import json
+import time
+import random
 from typing import List, Dict, Any
+
+# Import the hybrid fetcher
+try:
+    from .youtube_hybrid_fetcher import search_youtube_videos_hybrid
+    HYBRID_AVAILABLE = True
+except ImportError:
+    HYBRID_AVAILABLE = False
+
+try:
+    from .youtube_fetcher_enhanced import search_youtube_videos_enhanced
+    ENHANCED_AVAILABLE = True
+except ImportError:
+    ENHANCED_AVAILABLE = False
 
 
 def get_youtube_videos_for_topics(topics: List[str], subject: str = "") -> List[Dict[str, Any]]:
@@ -8,7 +23,7 @@ def get_youtube_videos_for_topics(topics: List[str], subject: str = "") -> List[
     
     all_topics_data = []
     
-    # Configure yt-dlp options
+    # Configure yt-dlp options with anti-detection
     ydl_opts = {
         'quiet': True,  # Suppress most output
         'no_warnings': True,
@@ -17,6 +32,32 @@ def get_youtube_videos_for_topics(topics: List[str], subject: str = "") -> List[
         'writeautomaticsub': True,  # Extract auto-generated subtitles
         'subtitleslangs': ['en'],  # English subtitles
         'skip_download': True,  # Don't download the actual video
+        
+        # Anti-detection measures
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'referer': 'https://www.youtube.com/',
+        'headers': {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-us,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.7',
+            'Keep-Alive': '300',
+            'Connection': 'keep-alive',
+        },
+        
+        # Rate limiting and retry logic
+        'sleep_interval': 1,  # Sleep 1 second between requests
+        'max_sleep_interval': 5,
+        'sleep_interval_subtitles': 1,
+        'retries': 3,
+        'fragment_retries': 3,
+        
+        # Use cookies if available
+        'cookiefile': None,  # We'll handle this differently
+        
+        # Extract format options
+        'format': 'best',
+        'noplaylist': True,
     }
     
     print(f"Processing {len(topics)} topics...")
@@ -25,7 +66,15 @@ def get_youtube_videos_for_topics(topics: List[str], subject: str = "") -> List[
         print(f"\n[{i}/{len(topics)}] Searching for: '{topic}'")
         
         try:
-            videos_for_topic = search_youtube_videos(topic, ydl_opts, subject)
+            # Try hybrid approach first (best for Render)
+            if HYBRID_AVAILABLE:
+                videos_for_topic = search_youtube_videos_hybrid(topic, subject)
+            # Fallback to enhanced yt-dlp
+            elif ENHANCED_AVAILABLE:
+                videos_for_topic = search_youtube_videos_enhanced(topic, subject)
+            # Last resort: basic yt-dlp
+            else:
+                videos_for_topic = search_youtube_videos(topic, ydl_opts, subject)
             
             # Create topic dictionary with topic name and videos
             topic_data = {

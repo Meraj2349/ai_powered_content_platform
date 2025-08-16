@@ -15,7 +15,11 @@ python-dotenv==1.0.1
 google-generativeai==0.7.2
 
 # YouTube Data Extraction
+google-api-python-client==2.147.0
 yt-dlp==2024.8.6
+
+# Web Scraping (backup)
+beautifulsoup4==4.12.2
 
 # Standard Library Dependencies (included with Python)
 # json - built-in
