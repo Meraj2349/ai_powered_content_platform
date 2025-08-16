@@ -1,0 +1,33 @@
+# Core Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# API and HTTP
+requests==2.31.0
+
+# Data Models and Validation
+pydantic==2.5.0
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# Google AI (Gemini)
+google-generativeai==0.3.2
+
+# YouTube Data Extraction
+yt-dlp==2023.12.30
+
+# Standard Library Dependencies (included with Python)
+# json - built-in
+# os - built-in  
+# sys - built-in
+# time - built-in
+# uuid - built-in
+# typing - built-in
+# re - built-in (used for regex operations)
+
+# Development Dependencies (optional)
+# pytest==7.4.3
+# pytest-asyncio==0.21.1
+# black==23.11.0
+# flake8==6.1.0
