@@ -2,6 +2,7 @@
 Simple FastAPI server for course creation.
 Takes subject and difficulty level, returns complete course path.
 """
+
 import os
 import sys
 from typing import Dict, Any
@@ -10,21 +11,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
-# Add the parent directory to Python path to access course_path_gen
-current_dir = os.path.dirname(__file__)
-parent_dir = os.path.dirname(current_dir)
-sys.path.append(parent_dir)
+# Add course_path_generator directory to path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'course_path_generator'))
 
-# Now import from course_path_gen
-try:
-    from course_path_gen.learning_api_service import LearningAPIService
-    print("Successfully imported LearningAPIService")
-except ImportError as e:
-    print(f"Warning: Could not import LearningAPIService: {e}")
-    LearningAPIService = None
+# Import our course creation function
+from src.course_path_generator.main_course_creator import create_complete_course
 
-# Load environment variables from the root directory
-load_dotenv(os.path.join(parent_dir, '..', '.env'))
+# Load environment variables
+load_dotenv()
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -50,9 +44,9 @@ class CourseRequest(BaseModel):
     difficulty: str
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
-                "subject": "fast api",
+                "subject": "Python Programming",
                 "difficulty": "beginner"
             }
         }
@@ -66,65 +60,96 @@ class CourseResponse(BaseModel):
 
 @app.get("/")
 async def root():
-    return {"message": "Skill mate AI Analyzer API", "status": "running", "docs": "/docs"}
+    """Health check endpoint."""
+    return {
+        "message": "Course Creator API is running!",
+        "status": "healthy",
+        "endpoints": {
+            "create_course": "POST /create-course",
+            "health": "GET /health",
+            "docs": "GET /docs"
+        }
+    }
 
-@app.get("/api/v1/health")
+@app.get("api/v1/health")
 async def health_check():
-    return {"status": "healthy", "service": "course-generator"}
+    """Health check endpoint."""
+    return {
+        "status": "healthy",
+        "service": "Course Creator API",
+        "version": "1.0.0"
+    }
 
 @app.post("/api/v1/generate-course-path", response_model=CourseResponse)
 async def create_course_endpoint(request: CourseRequest):
+    
     try:
-        if not LearningAPIService:
-            raise HTTPException(status_code=500, detail="Learning service not available")
+        # Validate difficulty level
+        valid_difficulties = ["beginner", "intermediate", "advanced"]
+        if request.difficulty.lower() not in valid_difficulties:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid difficulty level. Must be one of: {', '.join(valid_difficulties)}"
+            )
         
-        print(f"Generating course for: {request.subject} ({request.difficulty})")
+        # Validate subject
+        if not request.subject or not request.subject.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="Subject cannot be empty"
+            )
         
-        # Initialize the service
-        learning_service = LearningAPIService()
+        # Create the course
+        print(f"API: Creating course for '{request.subject}' at {request.difficulty} level")
         
-        # Generate the course
-        result = learning_service.generate_course_path(request.subject, request.difficulty)
+        course_path = create_complete_course(
+            subject=request.subject.strip(),
+            difficulty_level=request.difficulty.lower()
+        )
         
-        if result:
+        # Check if course creation was successful
+        if course_path.get('success'):
             return CourseResponse(
                 success=True,
-                data=result,
-                message="Course generated successfully"
+                data=course_path.get('data'),
+                message="Course created successfully!"
             )
         else:
             return CourseResponse(
                 success=False,
-                error="Failed to generate course path",
-                message="Course generation failed"
+                error=course_path.get('error', 'Unknown error occurred'),
+                message="Course creation failed"
             )
             
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+        
     except Exception as e:
-        print(f"Error generating course: {e}")
+        print(f"API Error: {str(e)}")
         return CourseResponse(
             success=False,
             error=str(e),
-            message="Error occurred during course generation"
+            message="Internal server error occurred"
         )
+
+# Optional: Add more endpoints if needed
 
 if __name__ == "__main__":
     import uvicorn
     
     # Get port from environment or use default
-    port = int(os.getenv('PORT', 8000))
-    host = os.getenv('HOST', '127.0.0.1')
+    port = int(os.getenv('PORT'))
+    host = os.getenv('HOST')
     
-    print("=" * 60)
-    print("SKILL MATE AI ANALYZER API STARTING...")
-    print("=" * 60)
     print(f"Starting Course Creator API on {host}:{port}")
     print(f"CORS Origins: {cors_origins}")
     print("API Documentation: http://127.0.0.1:8000/docs")
-    print("=" * 60)
     
+    # Use the app directly instead of reload for this setup
     uvicorn.run(
-        "main:app",
+        "main:app",  # Use module:app format for reload to work
         host=host, 
         port=port,
-        reload=True
+        reload=False  # Disable reload when running directly
     )
