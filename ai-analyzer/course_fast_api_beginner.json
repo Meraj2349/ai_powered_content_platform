@@ -1,0 +1,253 @@
+{
+  "success": true,
+  "data": {
+    "coursePath": {
+      "id": "course-19178210-c2c9-4faa-ad16-c938d2366a70",
+      "title": "fast api Learning Path",
+      "description": "A step-by-step learning path for mastering fast api at beginner level.",
+      "targetLevel": "beginner"
+    },
+    "topics": [
+      {
+        "id": "topic-51baf276-1fed-4d39-9f8a-3a29ea20e80e",
+        "name": "Introduction to APIs and RESTful Principles",
+        "description": "Learn about introduction to apis and restful principles - Explains REST API with a real-world example, breaking down requests, responses, HTTP methods, and endpoints.  Well-structured and easy to understand for beginners.",
+        "videoInfo": {
+          "youtubeUrl": "https://www.youtube.com/watch?v=lsMQRaeKNDk",
+          "title": "What is a REST API?",
+          "startTime": 0,
+          "endTime": 420
+        },
+        "prerequisites": [],
+        "tags": [
+          "introduction",
+          "apis",
+          "restful",
+          "principles"
+        ],
+        "qualityMetrics": {
+          "contentQuality": "high",
+          "relevanceScore": 95
+        }
+      },
+      {
+        "id": "topic-886bf0af-c07c-496a-95a8-0cb714c66834",
+        "name": "Setting up a Python Development Environment (venv, pip)",
+        "description": "Learn about setting up a python development environment (venv, pip) - Clear, concise instructions with visual aids specific to Visual Studio Code. Suitable for beginners and focuses on practical application. Good pacing.",
+        "videoInfo": {
+          "youtubeUrl": "https://www.youtube.com/watch?v=GZbeL5AcTgw",
+          "title": "How To Setup A Virtual Environment For Python In Visual Studio Code In 2023",
+          "startTime": 0,
+          "endTime": 240
+        },
+        "prerequisites": [
+          "previous-topic-1"
+        ],
+        "tags": [
+          "setting",
+          "python",
+          "development",
+          "environment",
+          "venv"
+        ],
+        "qualityMetrics": {
+          "contentQuality": "high",
+          "relevanceScore": 95
+        }
+      },
+      {
+        "id": "topic-d3ff55c6-8915-4cb5-bea9-4f72483d4bb3",
+        "name": "Installing FastAPI and Uvicorn",
+        "description": "Learn about installing fastapi and uvicorn - Includes installation and setup of FastAPI & Uvicorn. Walks through building a simple app, demonstrating the process in a practical context. The subtitle quality is also much better than Video 1.",
+        "videoInfo": {
+          "youtubeUrl": "https://www.youtube.com/watch?v=iWS9ogMPOI0",
+          "title": "Python FastAPI Tutorial: Build a REST API in 15 Minutes",
+          "startTime": 49,
+          "endTime": 222
+        },
+        "prerequisites": [
+          "previous-topic-2"
+        ],
+        "tags": [
+          "installing",
+          "fastapi",
+          "uvicorn"
+        ],
+        "qualityMetrics": {
+          "contentQuality": "high",
+          "relevanceScore": 95
+        }
+      },
+      {
+        "id": "topic-8becba1e-910d-4384-a2e6-4599ffa0cfc2",
+        "name": "Your First FastAPI Application: \"Hello, World!\"",
+        "description": "Learn about your first fastapi application: \"hello, world!\" - Clear, concise explanation ideal for beginners. Good pace and explains each step effectively, including running the app and seeing the result.",
+        "videoInfo": {
+          "youtubeUrl": "https://www.youtube.com/watch?v=bl-kVpPs8oI",
+          "title": "Hello World with Python's FastAPI Framework",
+          "startTime": 0,
+          "endTime": 239
+        },
+        "prerequisites": [
+          "previous-topic-3"
+        ],
+        "tags": [
+          "your",
+          "first",
+          "fastapi",
+          "application",
+          "hello"
+        ],
+        "qualityMetrics": {
+          "contentQuality": "high",
+          "relevanceScore": 95
+        }
+      },
+      {
+        "id": "topic-70a3cb7e-eb18-4836-91ad-bad2d4acf5f1",
+        "name": "Path Parameters and Query Parameters",
+        "description": "Learn about path parameters and query parameters - Clear explanation and code examples suitable for beginners. Subtitles are accurate and well-structured. Timestamps provided for easy navigation. Good pace.",
+        "videoInfo": {
+          "youtubeUrl": "https://www.youtube.com/watch?v=6uN6GxMwzVI",
+          "title": "FastAPI Tutorial #3 - Path Parameters and Query Parameters Explained: Creating Flexible APIs [2024]",
+          "startTime": 29,
+          "endTime": 360
+        },
+        "prerequisites": [
+          "previous-topic-4"
+        ],
+        "tags": [
+          "path",
+          "parameters",
+          "query",
+          "parameters"
+        ],
+        "qualityMetrics": {
+          "contentQuality": "high",
+          "relevanceScore": 95
+        }
+      },
+      {
+        "id": "topic-e31a86b2-9ef9-443a-a77b-5ee6e8850ac5",
+        "name": "Data Validation with Pydantic",
+        "description": "Learn about data validation with pydantic - Clear, concise explanations with code examples that match the topic. Good for beginners. The timestamps help to navigate to specific content.",
+        "videoInfo": {
+          "youtubeUrl": "https://www.youtube.com/watch?v=Wh8EX7bAC2A",
+          "title": "FastAPI Tutorial #5 - Data Validation in FastAPI with Pydantic:Ensuring Clean Input [2024]",
+          "startTime": 0,
+          "endTime": 0
+        },
+        "prerequisites": [
+          "previous-topic-5"
+        ],
+        "tags": [
+          "data",
+          "validation",
+          "pydantic"
+        ],
+        "qualityMetrics": {
+          "contentQuality": "high",
+          "relevanceScore": 95
+        }
+      },
+      {
+        "id": "topic-45fb285b-e422-4a20-87ff-44563cf82158",
+        "name": "Request Body and Response Body",
+        "description": "Learn about request body and response body - Clear, concise explanation of request and response bodies, their purpose, and implementation using Pydantic.  Includes a practical example. Chapters are a bonus.",
+        "videoInfo": {
+          "youtubeUrl": "https://www.youtube.com/watch?v=8t6nbOH78lY",
+          "title": "FastAPI Tutorial #4 - Handling Request and Response Bodies: Simplifying Data Exchange [2024]",
+          "startTime": 30,
+          "endTime": 310
+        },
+        "prerequisites": [
+          "previous-topic-6"
+        ],
+        "tags": [
+          "request",
+          "body",
+          "response",
+          "body"
+        ],
+        "qualityMetrics": {
+          "contentQuality": "high",
+          "relevanceScore": 95
+        }
+      },
+      {
+        "id": "topic-9a183567-ff9b-4bd1-8141-1dac06b96da7",
+        "name": "HTTP Methods: GET, POST, PUT, DELETE",
+        "description": "Learn about http methods: get, post, put, delete - Clear explanation with code examples and a practical demonstration of building a CRUD API. Includes timestamps and clear breakdown suitable for beginners.",
+        "videoInfo": {
+          "youtubeUrl": "https://www.youtube.com/watch?v=gV-EpY2TeQ0",
+          "title": "FastAPI Essentials - Creating a CRUD API with GET, POST, PUT and DELETE Endpoints",
+          "startTime": 91,
+          "endTime": 1133
+        },
+        "prerequisites": [
+          "previous-topic-7"
+        ],
+        "tags": [
+          "http",
+          "methods",
+          "get",
+          "post",
+          "put"
+        ],
+        "qualityMetrics": {
+          "contentQuality": "high",
+          "relevanceScore": 95
+        }
+      },
+      {
+        "id": "topic-f8c37a14-2813-4d49-b395-8482f4369781",
+        "name": "Basic Error Handling with HTTP Exceptions",
+        "description": "Learn about basic error handling with http exceptions - Good explanation of custom exceptions, exception handlers, and their benefits in FastAPI. Suitable for beginners, covering practical implementation. Includes code examples.",
+        "videoInfo": {
+          "youtubeUrl": "https://www.youtube.com/watch?v=7MHDDOrDx-w",
+          "title": "This Is How You Do PROPER Exception Handling With FastAPI",
+          "startTime": 49,
+          "endTime": 338
+        },
+        "prerequisites": [
+          "previous-topic-8"
+        ],
+        "tags": [
+          "basic",
+          "error",
+          "handling",
+          "http",
+          "exceptions"
+        ],
+        "qualityMetrics": {
+          "contentQuality": "high",
+          "relevanceScore": 95
+        }
+      },
+      {
+        "id": "topic-eabe1ee2-0a99-4775-9e22-5a6fdb8bb489",
+        "name": "Asynchronous Programming with `async` and `await`",
+        "description": "Learn about asynchronous programming with `async` and `await` - Explains the core concepts with examples that are easy to follow for beginners. Starts with a practical example and explains the underlying concepts well.",
+        "videoInfo": {
+          "youtubeUrl": "https://www.youtube.com/watch?v=tGD3653BrZ8",
+          "title": "How FastAPI Handles Requests Behind the Scenes",
+          "startTime": 0,
+          "endTime": 309
+        },
+        "prerequisites": [
+          "previous-topic-9"
+        ],
+        "tags": [
+          "asynchronous",
+          "programming",
+          "async",
+          "await"
+        ],
+        "qualityMetrics": {
+          "contentQuality": "high",
+          "relevanceScore": 95
+        }
+      }
+    ]
+  }
+}
