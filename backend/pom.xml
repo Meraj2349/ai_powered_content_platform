@@ -113,24 +113,85 @@
 	</dependency>
 </dependencies>
 
-<build>
-	<plugins>
+	<build>
+		<plugins>
 
-		<!-- 1) Prevent any Class-Path entries from being written to META-INF/MANIFEST.MF -->
-		<plugin>
-			<groupId>org.apache.maven.plugins</groupId>
-			<artifactId>maven-jar-plugin</artifactId>
+			<!-- Frontend build plugin -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
+					<execution>
+						<id>frontend-install</id>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+						<phase>generate-resources</phase>
+						<configuration>
+							<executable>npm</executable>
+							<arguments>
+								<argument>install</argument>
+							</arguments>
+							<workingDirectory>${basedir}/../Front-End/skillmate-frontend</workingDirectory>
+						</configuration>
+					</execution>
+					<execution>
+						<id>frontend-build</id>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+						<phase>generate-resources</phase>
+						<configuration>
+							<executable>npm</executable>
+							<arguments>
+								<argument>run</argument>
+								<argument>build</argument>
+							</arguments>
+							<workingDirectory>${basedir}/../Front-End/skillmate-frontend</workingDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 
-			<configuration>
-				<archive>
-					<manifest>
-						<addClasspath>false</addClasspath>
-					</manifest>
-				</archive>
-			</configuration>
-		</plugin>
+			<!-- Copy frontend build to static resources -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>3.3.0</version>
+				<executions>
+					<execution>
+						<id>copy-frontend-build</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${basedir}/src/main/resources/static</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/../Front-End/skillmate-frontend/dist</directory>
+									<filtering>false</filtering>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 
-		<!-- 2) Spring Boot repackage (no special manifest tweaks needed now) -->
+			<!-- 1) Prevent any Class-Path entries from being written to META-INF/MANIFEST.MF -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+
+				<configuration>
+					<archive>
+						<manifest>
+							<addClasspath>false</addClasspath>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>		<!-- 2) Spring Boot repackage (no special manifest tweaks needed now) -->
 		<plugin>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-maven-plugin</artifactId>
