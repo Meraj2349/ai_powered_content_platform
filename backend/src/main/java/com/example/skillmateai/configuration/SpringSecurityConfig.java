@@ -92,10 +92,13 @@ public class SpringSecurityConfig {
         boolean isProduction = activeProfiles.length > 0 && Arrays.asList(activeProfiles).contains("prod");
 
         if (isProduction) {
-            config.setAllowedOriginPatterns(Arrays.asList(
-                    corsProductionAllowedOrigin1
-            ));
-            System.out.println("CORS configured for PRODUCTION: Selected origins allowed");
+            //temporary for development phase
+            config.setAllowedOriginPatterns(Arrays.asList("*"));
+            System.out.println("CORS configured for DEVELOPMENT: All origins allowed");
+//            config.setAllowedOriginPatterns(Arrays.asList(
+//                    corsProductionAllowedOrigin1
+//            ));
+//            System.out.println("CORS configured for PRODUCTION: Selected origins allowed");
         } else {
             config.setAllowedOriginPatterns(Arrays.asList("*"));
             System.out.println("CORS configured for DEVELOPMENT: All origins allowed");
