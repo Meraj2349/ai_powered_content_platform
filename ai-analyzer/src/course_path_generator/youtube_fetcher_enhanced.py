@@ -23,11 +23,11 @@ def create_enhanced_ydl_opts():
     return {
         'quiet': True,
         'no_warnings': True,
-        'extract_flat': False,
-        'writesubtitles': True,
-        'writeautomaticsub': True,
-        'subtitleslangs': ['en'],
+        'extract_flat': True,  # Only get basic info, no format processing
+        'writesubtitles': False,
+        'writeautomaticsub': False,
         'skip_download': True,
+        'ignoreerrors': True,
         
         # Random user agent
         'user_agent': random.choice(user_agents),
@@ -48,15 +48,13 @@ def create_enhanced_ydl_opts():
         },
         
         # Rate limiting
-        'sleep_interval': random.uniform(2, 5),  # Random delay between 2-5 seconds
-        'max_sleep_interval': 10,
-        'sleep_interval_subtitles': 2,
-        'retries': 5,
-        'fragment_retries': 5,
-        'socket_timeout': 30,
+        'sleep_interval': random.uniform(1, 3),  # Reduced delay to speed up
+        'max_sleep_interval': 5,
+        'retries': 2,  # Reduced retries to avoid hanging
+        'fragment_retries': 1,  # Reduced fragment retries
+        'socket_timeout': 15,  # Reduced timeout
         
         # Additional options
-        'format': 'best',
         'noplaylist': True,
         'extract_flat': False,
         'ignoreerrors': True,  # Continue on errors

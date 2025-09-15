@@ -15,30 +15,22 @@ def fetch_and_analyze_topics_individually(topics: list[str], subject: str, diffi
     
     # Import required modules
     from src.course_path_generator.get_youtube_videos import search_youtube_videos
-    from src.course_path_generator.create_course_path import analyze_topic_videos_with_gemini, create_topic_structure
+    from src.course_path_generator.create_course_path import analyze_topic_videos_with_gemini_fallback, create_topic_structure
     import os
-    import google.generativeai as genai
     
-    # Configure Gemini API
-    api_key = os.getenv('GEMINI_API_KEY')
-    if not api_key:
-        raise ValueError("GEMINI_API_KEY not found in environment variables")
-    
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-2.0-flash-exp')
+    # We no longer need to configure Gemini API here since the fallback function handles it
     
     # Configure yt-dlp options for video fetching with anti-detection
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
-        'extract_flat': False,
-        'writesubtitles': True,
-        'writeautomaticsub': True,
-        'subtitleslangs': ['en'],
+        'extract_flat': True,  # Only get basic info, don't process formats
         'skip_download': True,
+        'ignoreerrors': True,  # Continue on errors
+        'no_check_certificate': True,  # Bypass SSL issues
         
         # Anti-detection measures
-        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'referer': 'https://www.youtube.com/',
         'headers': {
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -50,10 +42,10 @@ def fetch_and_analyze_topics_individually(topics: list[str], subject: str, diffi
         },
         'sleep_interval': 1,
         'max_sleep_interval': 5,
-        'retries': 3,
-        'fragment_retries': 3,
-        'format': 'best',
+        'retries': 2,  # Reduced retries
+        'fragment_retries': 1,  # Reduced fragment retries
         'noplaylist': True,
+        # Removed 'format': 'best' to avoid validation errors
     }
     
     analyzed_topics = []
@@ -73,8 +65,8 @@ def fetch_and_analyze_topics_individually(topics: list[str], subject: str, diffi
             
             # Step B: Immediately analyze these videos with Gemini
             print(f"    🧠 Analyzing with Gemini...")
-            best_video_analysis = analyze_topic_videos_with_gemini(
-                model, topic, videos_for_topic, subject, difficulty_level
+            best_video_analysis = analyze_topic_videos_with_gemini_fallback(
+                topic, videos_for_topic, subject, difficulty_level
             )
             
             if best_video_analysis:

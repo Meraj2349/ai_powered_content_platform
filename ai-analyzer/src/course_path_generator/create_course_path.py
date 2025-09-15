@@ -11,14 +11,6 @@ load_dotenv()
 def create_course_path(videos_data: List[Dict[str, Any]], subject: str, difficulty_level: str) -> Dict[str, Any]:
 
     
-    # Configure Gemini API
-    api_key = os.getenv('GEMINI_API_KEY')
-    if not api_key:
-        raise ValueError("GEMINI_API_KEY not found in environment variables")
-    
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-2.0-flash-exp')
-    
     print(f"Creating course path for: {subject} ({difficulty_level} level)")
     print(f"Analyzing {len(videos_data)} topics...")
     
@@ -38,9 +30,9 @@ def create_course_path(videos_data: List[Dict[str, Any]], subject: str, difficul
             continue
         
         try:
-            # Analyze this topic's videos with Gemini
-            best_video_analysis = analyze_topic_videos_with_gemini(
-                model, topic_name, videos, subject, difficulty_level
+            # Analyze this topic's videos with Gemini (using fallback system)
+            best_video_analysis = analyze_topic_videos_with_gemini_fallback(
+                topic_name, videos, subject, difficulty_level
             )
             
             if best_video_analysis:
@@ -154,6 +146,125 @@ Respond with ONLY the JSON object, no additional text."""
     except Exception as e:
         print(f"    Error calling Gemini API: {e}")
         return None
+
+
+def analyze_topic_videos_with_gemini_fallback(topic_name: str, videos: List[Dict], subject: str, difficulty_level: str) -> Dict[str, Any]:
+    """Analyze topic videos with Gemini API using fallback system for ANY error"""
+    
+    # List of all available API keys (now supporting 5 keys)
+    api_keys = [
+        os.getenv('GEMINI_API_KEY'),
+        os.getenv('GEMINI_API_KEY2'), 
+        os.getenv('GEMINI_API_KEY3'),
+        os.getenv('GEMINI_API_KEY4'),
+        os.getenv('GEMINI_API_KEY5')
+    ]
+    
+    # Filter out None values
+    api_keys = [key for key in api_keys if key]
+    
+    if not api_keys:
+        print("    ❌ No Gemini API keys found in environment variables")
+        return None
+    
+    # Prepare video information for Gemini
+    videos_info = []
+    for i, video in enumerate(videos, 1):
+        video_info = f"""
+Video {i}:
+Title: {video.get('title', 'N/A')}
+URL: {video.get('url', 'N/A')}
+Description: {video.get('description', 'N/A')}
+Subtitles: {video.get('subtitles', 'N/A')}
+Views: {video.get('view_count', 0):,}
+Likes: {video.get('like_count', 0):,}
+Duration: {video.get('duration', 0)} seconds
+Channel: {video.get('channel', 'N/A')}
+"""
+        videos_info.append(video_info)
+    
+    # Create comprehensive prompt for Gemini
+    prompt = f"""You are an expert educational content curator. Analyze these 5 YouTube videos for the topic "{topic_name}" in the subject "{subject}" at {difficulty_level} level.
+
+TASK: Select the BEST video and provide specific start/end times for the most relevant content.
+
+ANALYSIS CRITERIA (in priority order):
+1. PRIMARY: Content quality based on subtitles - analyze if the spoken content matches the topic and difficulty level
+2. SECONDARY: Video metrics (views, likes) as supporting indicators
+3. Look for timestamp information in descriptions to identify relevant segments
+4. Ensure content is appropriate for {difficulty_level} learners
+
+VIDEOS TO ANALYZE:
+{chr(10).join(videos_info)}
+
+INSTRUCTIONS:
+- Analyze the subtitle content to determine which video has the highest quality explanation for "{topic_name}"
+- Look for timestamps in descriptions that indicate relevant sections
+- If no specific timestamps are mentioned, analyze the entire video duration
+- Consider the {difficulty_level} level - content should not be too basic or too advanced
+- Focus on educational value over popularity metrics
+
+REQUIRED OUTPUT FORMAT (JSON only, no other text):
+{{
+  "selectedVideo": {{
+    "videoNumber": 1,
+    "youtubeUrl": "https://www.youtube.com/watch?v=...",
+    "title": "Video Title",
+    "reason": "Why this video was selected (max 200 chars)",
+    "startTimeMs": 0,
+    "endTimeMs": 300000,
+    "contentQuality": "high|medium|low",
+    "relevanceScore": 95
+  }}
+}}
+
+Respond with ONLY the JSON object, no additional text."""
+
+    # Try each API key until successful or all fail
+    for i, api_key in enumerate(api_keys):
+        try:
+            print(f"    Trying Gemini API key {i+1}/{len(api_keys)}...")
+            
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel('gemini-2.0-flash-exp')
+            response = model.generate_content(prompt)
+            response_text = response.text.strip()
+            
+            # Parse JSON response
+            if response_text.startswith('```json'):
+                response_text = response_text[7:-3].strip()
+            elif response_text.startswith('```'):
+                response_text = response_text[3:-3].strip()
+            
+            analysis_result = json.loads(response_text)
+            print(f"    ✅ Success with API key {i+1}")
+            return analysis_result
+            
+        except json.JSONDecodeError as e:
+            print(f"    ⚠️ JSON parsing error with API key {i+1}: {e}. Trying next key...")
+            if i < len(api_keys) - 1:  # Not the last key
+                continue
+            else:  # Last key, all failed
+                return None
+                
+        except Exception as e:
+            error_msg = str(e).lower()
+            
+            # Check if it's a rate limit error for specific messaging
+            if any(term in error_msg for term in ['rate limit', 'quota', 'limit exceeded', 'too many requests']):
+                print(f"    ⚠️ Rate limit hit with API key {i+1}. Trying next key...")
+            else:
+                # For any other error, also try next key
+                print(f"    ⚠️ Error with API key {i+1}: {str(e)[:100]}... Trying next key...")
+            
+            # Continue to next key for ANY error (not just rate limits)
+            if i < len(api_keys) - 1:  # Not the last key
+                continue
+            else:  # Last key, all failed
+                print(f"    ❌ All {len(api_keys)} API keys failed")
+                return None
+    
+    return None
 
 
 def create_topic_structure(topic_name: str, analysis: Dict[str, Any], index: int) -> Dict[str, Any]:

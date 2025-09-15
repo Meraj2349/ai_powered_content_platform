@@ -44,22 +44,50 @@ Topics:"""
 
 
 def _call_gemini_api(prompt):
-
-    try:
-        api_key = os.getenv('GEMINI_API_KEY')
-        if not api_key:
-            raise ValueError("GEMINI_API_KEY not found in environment variables")
-        
-        genai.configure(api_key=api_key)
-        
-        model = genai.GenerativeModel('gemini-2.0-flash-exp')
-        
-        response = model.generate_content(prompt)
-        
-        return response.text
-        
-    except Exception as e:
-        return "Error calling gemini-2.0-flash"
+    """Call Gemini API with automatic fallback to other API keys on ANY error"""
+    
+    # List of all available API keys (now supporting 5 keys)
+    api_keys = [
+        os.getenv('GEMINI_API_KEY'),
+        os.getenv('GEMINI_API_KEY2'), 
+        os.getenv('GEMINI_API_KEY3'),
+        os.getenv('GEMINI_API_KEY4'),
+        os.getenv('GEMINI_API_KEY5')
+    ]
+    
+    # Filter out None values
+    api_keys = [key for key in api_keys if key]
+    
+    if not api_keys:
+        raise ValueError("No Gemini API keys found in environment variables")
+    
+    # Try each API key until successful or all fail
+    for i, api_key in enumerate(api_keys):
+        try:
+            print(f"Trying Gemini API key {i+1}/{len(api_keys)}...")
+            
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel('gemini-2.0-flash-exp')
+            response = model.generate_content(prompt)
+            
+            print(f"✅ Success with API key {i+1}")
+            return response.text
+            
+        except Exception as e:
+            error_msg = str(e).lower()
+            
+            # Check if it's a rate limit error for specific messaging
+            if any(term in error_msg for term in ['rate limit', 'quota', 'limit exceeded', 'too many requests']):
+                print(f"⚠️ Rate limit hit with API key {i+1}. Trying next key...")
+            else:
+                # For any other error, also try next key
+                print(f"⚠️ Error with API key {i+1}: {str(e)[:100]}... Trying next key...")
+            
+            # Continue to next key for ANY error (not just rate limits)
+            if i < len(api_keys) - 1:  # Not the last key
+                continue
+            else:  # Last key, all failed
+                return f"Error: All {len(api_keys)} Gemini API keys failed. Last error: {str(e)}"
 
 
 def _parse_gemini_response(response):
