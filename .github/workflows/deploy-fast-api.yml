@@ -1,0 +1,42 @@
+name: Deploy FastAPI to Heroku
+
+on:
+  push:
+    branches:
+      - backend-and-ai  # triggers only on this branch
+
+jobs:
+  deploy-fastapi:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repo
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Debug: list repo contents
+      - name: List repo contents
+        run: ls -R
+
+      # 3. Install Python dependencies
+      - name: Install dependencies
+        working-directory: ./ai-analyzer   # <-- fixed folder name
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # 4. Deploy to Heroku
+      - name: Deploy to Heroku
+        working-directory: ./ai-analyzer   # <-- fixed folder name
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          git init
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git remote add heroku https://git.heroku.com/skillmate-ai-analyzer.git
+          git add .
+          git commit -m "Deploy FastAPI from backend-and-ai branch"
+          git push -f heroku HEAD:main

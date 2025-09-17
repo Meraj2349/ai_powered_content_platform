@@ -1,12 +1,10 @@
 package com.example.skillmateai.content.services;
 
 import com.example.skillmateai.content.entities.CoursePathEntity;
-import com.example.skillmateai.content.entities.TopicEntity;
 import com.example.skillmateai.content.entities.UserCourseProgressEntity;
 import com.example.skillmateai.content.entities.ProgressEntry;
 import com.example.skillmateai.content.entities.ReviewEntity;
 import com.example.skillmateai.content.repositories.CoursePathRepository;
-import com.example.skillmateai.content.repositories.TopicRepository;
 import com.example.skillmateai.content.repositories.UserCourseProgressRepository;
 import com.example.skillmateai.user.entities.UserEntity;
 import com.example.skillmateai.user.repositories.UserRepository;
@@ -29,7 +27,6 @@ import java.util.stream.Collectors;
 public class CoursePathService {
 
     private final CoursePathRepository coursePathRepository;
-    private final TopicRepository topicRepository;
     private final UserCourseProgressRepository userCourseProgressRepository;
     private final GetAuthenticatedUserUtil getAuthenticatedUserUtil;
     private final UserRepository userRepository;
@@ -39,8 +36,34 @@ public class CoursePathService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    private Map<String,Object> callAnalyzer(String subject, String difficulty){
-        Map<String, Object> requestBody = Map.of("subject", subject, "difficulty", difficulty.toLowerCase());
+    // private Map<String,Object> callAnalyzer(String subject, String difficulty){
+    //     Map<String, Object> requestBody = Map.of("subject", subject, "difficulty", difficulty.toLowerCase());
+    //     HttpHeaders headers = new HttpHeaders();
+    //     headers.setContentType(MediaType.APPLICATION_JSON);
+    //     HttpEntity<Map<String,Object>> entity = new HttpEntity<>(requestBody, headers);
+    //     Map<String, Object> aiResponse;
+    //     try {
+    //         @SuppressWarnings("rawtypes")
+    //         ResponseEntity<Map> response = restTemplate.postForEntity(aiAnalyzerBaseUrl + "/api/v1/generate-course-path", entity, Map.class);
+    //         @SuppressWarnings("unchecked") Map<String,Object> body = response.getBody();
+    //         aiResponse = body;
+    //     } catch (RestClientException e){
+    //         log.error("AI analyzer call failed: {}", e.getMessage());
+    //         throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI Analyzer unreachable");
+    //     }
+    //     if(aiResponse == null || !(Boolean.TRUE.equals(aiResponse.get("success")))){
+    //         log.error("AI analyzer returned unsuccessful response: {}", aiResponse);
+    //         throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to generate course path");
+    //     }
+    //     return aiResponse;
+    // }
+
+    private ResponseEntity<Map<String,Object>> callAnalyzer(String subject, String difficulty, String email){
+        Map<String, Object> requestBody = Map.of(
+                "subject", subject,
+                "difficulty", difficulty.toLowerCase(),
+                "email", email
+        );
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String,Object>> entity = new HttpEntity<>(requestBody, headers);
@@ -50,28 +73,127 @@ public class CoursePathService {
             ResponseEntity<Map> response = restTemplate.postForEntity(aiAnalyzerBaseUrl + "/api/v1/generate-course-path", entity, Map.class);
             @SuppressWarnings("unchecked") Map<String,Object> body = response.getBody();
             aiResponse = body;
+            // Propagate analyzer status (e.g., 202 ACCEPTED)
+            if(aiResponse == null){
+                log.error("AI analyzer returned null body with status: {}", response.getStatusCode());
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI Analyzer unreachable");
+            }
+            if(!(Boolean.TRUE.equals(aiResponse.get("success")))){
+                log.error("AI analyzer returned unsuccessful response: {}", aiResponse);
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to generate course path");
+            }
+            return ResponseEntity.status(response.getStatusCode()).body(aiResponse);
         } catch (RestClientException e){
             log.error("AI analyzer call failed: {}", e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI Analyzer unreachable");
         }
-        if(aiResponse == null || !(Boolean.TRUE.equals(aiResponse.get("success")))){
-            log.error("AI analyzer returned unsuccessful response: {}", aiResponse);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to generate course path");
-        }
-        return aiResponse;
+        
     }
 
-    public Map<String,Object> generateCoursePathNoAuth(String subject, String difficulty){
-        if(subject == null || subject.isBlank() || difficulty == null || difficulty.isBlank()){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Subject and difficulty are required");
-        }
-        Map<String,Object> aiResponse = callAnalyzer(subject, difficulty);
-        @SuppressWarnings("unchecked") Map<String,Object> data = (Map<String, Object>) aiResponse.get("data");
-        return data; // raw coursePath + topics, no persistence
-    }
+    // public Map<String,Object> generateCoursePathNoAuth(String subject, String difficulty){
+    //     if(subject == null || subject.isBlank() || difficulty == null || difficulty.isBlank()){
+    //         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Subject and difficulty are required");
+    //     }
+    //     Map<String,Object> aiResponse = callAnalyzer(subject, difficulty);
+    //     @SuppressWarnings("unchecked") Map<String,Object> data = (Map<String, Object>) aiResponse.get("data");
+    //     return data; // raw coursePath + topics, no persistence
+    // }
 
-    @SuppressWarnings("unchecked")
-    public Map<String, Object> generateAndPersistCoursePath(String subject, String difficulty){
+    // @SuppressWarnings("unchecked")
+    // public Map<String, Object> generateAndPersistCoursePath(String subject, String difficulty){
+    //     try {
+    //         UserEntity user = getAuthenticatedUserUtil.getAuthenticatedUser();
+    //         if(user == null){
+    //             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+    //         }
+    //         if(subject == null || subject.isBlank() || difficulty == null || difficulty.isBlank()){
+    //             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Subject and difficulty are required");
+    //         }
+
+    //         Map<String,Object> aiResponse = callAnalyzer(subject, difficulty);
+    //         Map<String, Object> data = (Map<String, Object>) aiResponse.get("data");
+    //         if(data == null){
+    //             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Malformed AI response");
+    //         }
+    //         Map<String, Object> coursePathMap = (Map<String, Object>) data.get("coursePath");
+    //         List<Map<String, Object>> topicMaps = (List<Map<String, Object>>) data.get("topics");
+
+    //         if(coursePathMap == null || topicMaps == null){
+    //             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Incomplete AI response");
+    //         }
+
+    //         // Persist topics first
+    //         List<TopicEntity> topicEntities = new ArrayList<>();
+    //         for(Map<String, Object> t : topicMaps){
+    //             Map<String, Object> videoInfo = (Map<String, Object>) t.get("videoInfo");
+    //             TopicEntity topic = TopicEntity.builder()
+    //                     .id((String) t.get("id"))
+    //                     .name((String) t.get("name"))
+    //                     .description((String) t.getOrDefault("description", ""))
+    //                     .videoInfo(videoInfo == null ? null : com.example.skillmateai.content.entities.VideoInfo.builder()
+    //                             .youtubeUrl((String) videoInfo.get("youtubeUrl"))
+    //                             .title((String) videoInfo.get("title"))
+    //                             .startTime(((Number) videoInfo.getOrDefault("startTime",0)).intValue())
+    //                             .endTime(((Number) videoInfo.getOrDefault("endTime",0)).intValue())
+    //                             .build())
+    //                     .prerequisites((List<String>) t.getOrDefault("prerequisites", new ArrayList<>()))
+    //                     .estimatedTimeMin(null)
+    //                     .tags((List<String>) t.getOrDefault("tags", new ArrayList<>()))
+    //                     .build();
+    //             topicEntities.add(topic);
+    //         }
+    //         topicRepository.saveAll(topicEntities);
+
+    //         CoursePathEntity coursePath = CoursePathEntity.builder()
+    //                 .id((String) coursePathMap.get("id"))
+    //                 .creatorId(user.getId())
+    //                 .title((String) coursePathMap.get("title"))
+    //                 .description((String) coursePathMap.get("description"))
+    //                 .targetLevel((String) coursePathMap.get("targetLevel"))
+    //                 .createdAt(System.currentTimeMillis())
+    //                 .createdBy(user.getFirstName())
+    //                 .topics(topicEntities.stream().map(TopicEntity::getId).collect(Collectors.toList()))
+    //                 .reviews(new ArrayList<>())
+    //                 .averageRating(0.0)
+    //                 .build();
+    //         coursePathRepository.save(coursePath);
+
+    //         // Update user's created course paths list
+    //         if(user.getCreatedCoursePaths() == null){
+    //             user.setCreatedCoursePaths(new ArrayList<>());
+    //         }
+    //         user.getCreatedCoursePaths().add(coursePath.getId());
+    //         userRepository.save(user);
+
+    //         List<ProgressEntry> progressEntries = topicEntities.stream().map(te -> ProgressEntry.builder()
+    //                 .topicId(te.getId())
+    //                 .isCovered(false)
+    //                 .lastUpdated(System.currentTimeMillis())
+    //                 .build()).collect(Collectors.toList());
+
+    //         UserCourseProgressEntity progress = UserCourseProgressEntity.builder()
+    //                 .userId(user.getId())
+    //                 .coursePathId(coursePath.getId())
+    //                 .startedAt(System.currentTimeMillis())
+    //                 .readiness(0)
+    //                 .progress(progressEntries)
+    //                 .build();
+    //         userCourseProgressRepository.save(progress);
+
+    //         Map<String,Object> response = new HashMap<>();
+    //         response.put("coursePath", coursePath);
+    //         response.put("topicsCount", topicEntities.size());
+    //         response.put("progressId", progress.getId());
+    //         return response;
+    //     } catch (ResponseStatusException e){
+    //         throw e; // bubble up for controller to format
+    //     } catch (Exception e){
+    //         log.error("Unexpected error generating course path: {}", e.getMessage(), e);
+    //         throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal error generating course path");
+    //     }
+    // }
+
+    public ResponseEntity<Map<String,Object>> generateAndPersistCoursePath(String subject, String difficulty){
         try {
             UserEntity user = getAuthenticatedUserUtil.getAuthenticatedUser();
             if(user == null){
@@ -81,81 +203,81 @@ public class CoursePathService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Subject and difficulty are required");
             }
 
-            Map<String,Object> aiResponse = callAnalyzer(subject, difficulty);
-            Map<String, Object> data = (Map<String, Object>) aiResponse.get("data");
-            if(data == null){
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Malformed AI response");
-            }
-            Map<String, Object> coursePathMap = (Map<String, Object>) data.get("coursePath");
-            List<Map<String, Object>> topicMaps = (List<Map<String, Object>>) data.get("topics");
+            ResponseEntity<Map<String,Object>> aiResponse = callAnalyzer(subject, difficulty, user.getEmail());
+            // Map<String, Object> data = (Map<String, Object>) aiResponse.get("data");
+            // if(data == null){
+            //     throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Malformed AI response");
+            // }
+            // Map<String, Object> coursePathMap = (Map<String, Object>) data.get("coursePath");
+            // List<Map<String, Object>> topicMaps = (List<Map<String, Object>>) data.get("topics");
 
-            if(coursePathMap == null || topicMaps == null){
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Incomplete AI response");
-            }
+            // if(coursePathMap == null || topicMaps == null){
+            //     throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Incomplete AI response");
+            // }
 
-            // Persist topics first
-            List<TopicEntity> topicEntities = new ArrayList<>();
-            for(Map<String, Object> t : topicMaps){
-                Map<String, Object> videoInfo = (Map<String, Object>) t.get("videoInfo");
-                TopicEntity topic = TopicEntity.builder()
-                        .id((String) t.get("id"))
-                        .name((String) t.get("name"))
-                        .description((String) t.getOrDefault("description", ""))
-                        .videoInfo(videoInfo == null ? null : com.example.skillmateai.content.entities.VideoInfo.builder()
-                                .youtubeUrl((String) videoInfo.get("youtubeUrl"))
-                                .title((String) videoInfo.get("title"))
-                                .startTime(((Number) videoInfo.getOrDefault("startTime",0)).intValue())
-                                .endTime(((Number) videoInfo.getOrDefault("endTime",0)).intValue())
-                                .build())
-                        .prerequisites((List<String>) t.getOrDefault("prerequisites", new ArrayList<>()))
-                        .estimatedTimeMin(null)
-                        .tags((List<String>) t.getOrDefault("tags", new ArrayList<>()))
-                        .build();
-                topicEntities.add(topic);
-            }
-            topicRepository.saveAll(topicEntities);
+            // // Persist topics first
+            // List<TopicEntity> topicEntities = new ArrayList<>();
+            // for(Map<String, Object> t : topicMaps){
+            //     Map<String, Object> videoInfo = (Map<String, Object>) t.get("videoInfo");
+            //     TopicEntity topic = TopicEntity.builder()
+            //             .id((String) t.get("id"))
+            //             .name((String) t.get("name"))
+            //             .description((String) t.getOrDefault("description", ""))
+            //             .videoInfo(videoInfo == null ? null : com.example.skillmateai.content.entities.VideoInfo.builder()
+            //                     .youtubeUrl((String) videoInfo.get("youtubeUrl"))
+            //                     .title((String) videoInfo.get("title"))
+            //                     .startTime(((Number) videoInfo.getOrDefault("startTime",0)).intValue())
+            //                     .endTime(((Number) videoInfo.getOrDefault("endTime",0)).intValue())
+            //                     .build())
+            //             .prerequisites((List<String>) t.getOrDefault("prerequisites", new ArrayList<>()))
+            //             .estimatedTimeMin(null)
+            //             .tags((List<String>) t.getOrDefault("tags", new ArrayList<>()))
+            //             .build();
+            //     topicEntities.add(topic);
+            // }
+            // topicRepository.saveAll(topicEntities);
 
-            CoursePathEntity coursePath = CoursePathEntity.builder()
-                    .id((String) coursePathMap.get("id"))
-                    .creatorId(user.getId())
-                    .title((String) coursePathMap.get("title"))
-                    .description((String) coursePathMap.get("description"))
-                    .targetLevel((String) coursePathMap.get("targetLevel"))
-                    .createdAt(System.currentTimeMillis())
-                    .createdBy(user.getFirstName())
-                    .topics(topicEntities.stream().map(TopicEntity::getId).collect(Collectors.toList()))
-                    .reviews(new ArrayList<>())
-                    .averageRating(0.0)
-                    .build();
-            coursePathRepository.save(coursePath);
+            // CoursePathEntity coursePath = CoursePathEntity.builder()
+            //         .id((String) coursePathMap.get("id"))
+            //         .creatorId(user.getId())
+            //         .title((String) coursePathMap.get("title"))
+            //         .description((String) coursePathMap.get("description"))
+            //         .targetLevel((String) coursePathMap.get("targetLevel"))
+            //         .createdAt(System.currentTimeMillis())
+            //         .createdBy(user.getFirstName())
+            //         .topics(topicEntities.stream().map(TopicEntity::getId).collect(Collectors.toList()))
+            //         .reviews(new ArrayList<>())
+            //         .averageRating(0.0)
+            //         .build();
+            // coursePathRepository.save(coursePath);
 
-            // Update user's created course paths list
-            if(user.getCreatedCoursePaths() == null){
-                user.setCreatedCoursePaths(new ArrayList<>());
-            }
-            user.getCreatedCoursePaths().add(coursePath.getId());
-            userRepository.save(user);
+            // // Update user's created course paths list
+            // if(user.getCreatedCoursePaths() == null){
+            //     user.setCreatedCoursePaths(new ArrayList<>());
+            // }
+            // user.getCreatedCoursePaths().add(coursePath.getId());
+            // userRepository.save(user);
 
-            List<ProgressEntry> progressEntries = topicEntities.stream().map(te -> ProgressEntry.builder()
-                    .topicId(te.getId())
-                    .isCovered(false)
-                    .lastUpdated(System.currentTimeMillis())
-                    .build()).collect(Collectors.toList());
+            // List<ProgressEntry> progressEntries = topicEntities.stream().map(te -> ProgressEntry.builder()
+            //         .topicId(te.getId())
+            //         .isCovered(false)
+            //         .lastUpdated(System.currentTimeMillis())
+            //         .build()).collect(Collectors.toList());
 
-            UserCourseProgressEntity progress = UserCourseProgressEntity.builder()
-                    .userId(user.getId())
-                    .coursePathId(coursePath.getId())
-                    .startedAt(System.currentTimeMillis())
-                    .readiness(0)
-                    .progress(progressEntries)
-                    .build();
-            userCourseProgressRepository.save(progress);
+            // UserCourseProgressEntity progress = UserCourseProgressEntity.builder()
+            //         .userId(user.getId())
+            //         .coursePathId(coursePath.getId())
+            //         .startedAt(System.currentTimeMillis())
+            //         .readiness(0)
+            //         .progress(progressEntries)
+            //         .build();
+            // userCourseProgressRepository.save(progress);
 
-            Map<String,Object> response = new HashMap<>();
-            response.put("coursePath", coursePath);
-            response.put("topicsCount", topicEntities.size());
-            response.put("progressId", progress.getId());
-            return response;
+            // Map<String,Object> response = new HashMap<>();
+            // response.put("coursePath", coursePath);
+            // response.put("topicsCount", topicEntities.size());
+            // response.put("progressId", progress.getId());
+            return aiResponse;
         } catch (ResponseStatusException e){
             throw e; // bubble up for controller to format
         } catch (Exception e){
@@ -314,45 +436,51 @@ public class CoursePathService {
     }
     */
 
-    // EXPERIMENTAL - DISABLED: Search similar course paths functionality
-    // This method is currently experimental and not recommended for production use
-    /*
+    // Search similar course paths by title using case-insensitive one-word match (OR across tokens)
     public List<CoursePathEntity> searchSimilarCoursePaths(String query){
         try {
             if(query == null || query.isBlank()){
                 return new ArrayList<>();
             }
-            
-            // Clean and prepare search terms
-            String cleanQuery = query.toLowerCase().replaceAll("[^a-zA-Z0-9\\s]", "");
-            String[] terms = cleanQuery.split("\\s+");
-            
-            // Try multiple search strategies for better duplicate detection
-            List<CoursePathEntity> results = new ArrayList<>();
-            
-            // Strategy 1: Exact phrase matching with flexible spacing
-            String exactPhrase = String.join(".*", terms);
-            String exactPattern = ".*" + exactPhrase + ".*";
-            results.addAll(coursePathRepository.findByTitleRegex(exactPattern));
-            
-            // Strategy 2: Individual term matching (any term matches)
-            for(String term : terms) {
-                if(term.length() >= 3) { // Only search for meaningful terms
-                    results.addAll(coursePathRepository.findByTitleContainingIgnoreCase(term));
-                }
-            }
-            
-            // Strategy 3: Remove duplicates and return
-            return results.stream()
+
+            // Clean and prepare tokens (alphanumeric words), case-insensitive
+            String cleanQuery = query.toLowerCase().replaceAll("[^a-zA-Z0-9\\s]", " ");
+            String[] rawTerms = cleanQuery.trim().split("\\s+");
+            List<String> terms = Arrays.stream(rawTerms)
+                    .filter(t -> t != null && !t.isBlank())
                     .distinct()
                     .collect(Collectors.toList());
-                    
+
+            if(terms.isEmpty()){
+                return new ArrayList<>();
+            }
+
+            // Build a single regex that matches any token: .*(term1|term2|term3).*
+            // We already removed non-alphanumerics, so simple alternation is safe for Mongo regex
+            String alternation = String.join("|", terms);
+            String pattern = ".*(" + alternation + ").*";
+
+            List<CoursePathEntity> results = coursePathRepository.findByTitleRegex(pattern);
+
+            // Optional: sort by simple relevance = number of matched tokens in title
+            final List<String> tokens = terms;
+            results.sort((a, b) -> {
+                String at = a.getTitle() != null ? a.getTitle().toLowerCase() : "";
+                String bt = b.getTitle() != null ? b.getTitle().toLowerCase() : "";
+                long ac = tokens.stream().filter(at::contains).count();
+                long bc = tokens.stream().filter(bt::contains).count();
+                return Long.compare(bc, ac);
+            });
+
+            // De-duplicate if needed and return
+            return results.stream().distinct().collect(Collectors.toList());
+
         } catch (Exception e){
             log.error("Unexpected error searching course paths: {}", e.getMessage(), e);
             return new ArrayList<>();
         }
     }
-    */
+    
 
     public Map<String,Object> addReviewToCoursePath(String coursePathId, Integer rating, String comment){
         try {

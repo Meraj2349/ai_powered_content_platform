@@ -1,0 +1,32 @@
+jobs:
+  deploy-spring:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend   # <-- here
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Make mvnw executable
+        run: chmod +x mvnw
+
+      - name: Build Spring Boot
+        run: ./mvnw clean install -DskipTests
+
+      - name: Deploy to Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          git init
+          git remote add heroku https://git.heroku.com/skillmate-ai-api.git
+          git add .
+          git commit -m "Deploy Spring Boot to Heroku"
+          git push -f heroku HEAD:main

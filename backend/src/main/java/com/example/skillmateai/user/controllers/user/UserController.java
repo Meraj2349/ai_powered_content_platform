@@ -77,15 +77,15 @@ public class UserController {
 
             String email =authenticatedUser.getEmail();
 
-            userVerificationRepository.deleteByUserEmail(authenticatedUser.getEmail());
-            userRepository.deleteById(authenticatedUser.getEmail());
+//            userVerificationRepository.deleteByUserEmail(authenticatedUser.getEmail());
+            userRepository.deleteById(authenticatedUser.getId());
             UserEntity userByEmail = userRepository.findByEmail(email).orElse(null);
 
-            UserVerificationEntity userVerificationEntity = userVerificationRepository.findByUserEmail(authenticatedUser.getEmail()).orElse(null);
+//            UserVerificationEntity userVerificationEntity = userVerificationRepository.findByUserEmail(authenticatedUser.getEmail()).orElse(null);
 
-            if (userByEmail == null && userVerificationEntity == null) {
+            if (userByEmail == null) {
 
-                return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                return ResponseEntity.status(HttpStatus.OK)
                         .body(createResponseUtil.createResponseBody(true, "User successfully deleted"));
             } else {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -100,7 +100,7 @@ public class UserController {
         }
     }
 
-    @PutMapping("update/name")
+    @PatchMapping("update/name")
     public ResponseEntity<Object> updateName(@RequestBody UpdateNameRequest request) {
         try {
             
@@ -118,7 +118,7 @@ public class UserController {
         }
     }
 
-    @PutMapping("update/password")
+    @PatchMapping("update/password")
     public ResponseEntity<Object> resetPasswordWithPreviousPassword(@RequestBody ResetPasswordRequest request) {
         try {
             
