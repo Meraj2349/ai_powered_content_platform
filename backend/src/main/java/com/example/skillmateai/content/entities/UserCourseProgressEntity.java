@@ -15,10 +15,10 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserCourseProgressEntity {
-    
+
     @Id
     private String id;
-    
+
     private String userId;
     private String coursePathId;
     private long startedAt;

@@ -4,15 +4,13 @@ package com.example.skillmateai.content.controllers;
 import com.example.skillmateai.content.dtos.GenerateCoursePathRequest;
 import com.example.skillmateai.content.dtos.EnrollCoursePathRequest;
 import com.example.skillmateai.content.dtos.AddReviewRequest;
-import com.example.skillmateai.content.dtos.ToggleTopicStatusRequest;
 import com.example.skillmateai.content.entities.CoursePathEntity;
-import com.example.skillmateai.content.entities.TopicEntity;
-import com.example.skillmateai.content.entities.UserCourseProgressEntity;
 import com.example.skillmateai.content.services.CoursePathService;
 import com.example.skillmateai.content.utilities.CreateContentResponseUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,6 +30,32 @@ public class CoursePathController {
     @Autowired
     private CreateContentResponseUtil createContentResponseUtil;
 
+    // @PostMapping("/generate")
+    // public ResponseEntity<Map<String,Object>> generateCoursePath(@RequestBody GenerateCoursePathRequest request){
+    //     try {
+    //         // Check user verification
+    //         ResponseEntity<Map<String, Object>> verificationResult = createContentResponseUtil.validateUserVerification();
+    //         if (verificationResult != null) {
+    //             return verificationResult;
+    //         }
+            
+    //         if(request == null){
+    //             return ResponseEntity.badRequest().body(createContentResponseUtil.basic(false, "Request body is required"));
+    //         }
+    //         if(request.getSubject() == null || request.getSubject().isBlank() || request.getDifficulty() == null || request.getDifficulty().isBlank()){
+    //             return ResponseEntity.badRequest().body(createContentResponseUtil.basic(false, "Subject and difficulty are required"));
+    //         }
+    //         Map<String,Object> data = coursePathService.generateAndPersistCoursePath(request.getSubject(), request.getDifficulty());
+    //         return ResponseEntity.ok(createContentResponseUtil.withData(true, "Course path generated", "data", data));
+    //     } catch (org.springframework.web.server.ResponseStatusException e){
+    //         return ResponseEntity.status(e.getStatusCode())
+    //                 .body(createContentResponseUtil.basic(false, e.getReason() == null ? "Request failed" : e.getReason()));
+    //     } catch (Exception e){
+    //         log.error("Error generating course path: {}", e.getMessage(), e);
+    //         return ResponseEntity.internalServerError().body(createContentResponseUtil.basic(false, "An error occurred while generating course path"));
+    //     }
+    // }
+
     @PostMapping("/generate")
     public ResponseEntity<Map<String,Object>> generateCoursePath(@RequestBody GenerateCoursePathRequest request){
         try {
@@ -47,8 +71,15 @@ public class CoursePathController {
             if(request.getSubject() == null || request.getSubject().isBlank() || request.getDifficulty() == null || request.getDifficulty().isBlank()){
                 return ResponseEntity.badRequest().body(createContentResponseUtil.basic(false, "Subject and difficulty are required"));
             }
-            Map<String,Object> data = coursePathService.generateAndPersistCoursePath(request.getSubject(), request.getDifficulty());
-            return ResponseEntity.ok(createContentResponseUtil.withData(true, "Course path generated", "data", data));
+            ResponseEntity<Map<String,Object>> analyzerResponse = coursePathService.generateAndPersistCoursePath(request.getSubject(), request.getDifficulty());
+            if(analyzerResponse.getStatusCode().equals(HttpStatus.ACCEPTED)){
+                // Return 202 with minimal body; do not include analyzer response data
+                return ResponseEntity.status(HttpStatus.ACCEPTED)
+                        .body(createContentResponseUtil.basic(true, "Course path will be generated soon"));
+            } else {
+                // For OK (200) from analyzer, per new policy we still do not return course data here
+                return ResponseEntity.ok(createContentResponseUtil.basic(true, "Course path generated"));
+            }
         } catch (org.springframework.web.server.ResponseStatusException e){
             return ResponseEntity.status(e.getStatusCode())
                     .body(createContentResponseUtil.basic(false, e.getReason() == null ? "Request failed" : e.getReason()));
@@ -151,7 +182,7 @@ public class CoursePathController {
 
     // EXPERIMENTAL - DISABLED: Search course paths endpoint
     // This endpoint is currently experimental and not recommended for production use
-    /*
+
     @GetMapping("/search")
     public ResponseEntity<Map<String,Object>> searchCoursePaths(@RequestParam String query){
         try {
@@ -160,7 +191,7 @@ public class CoursePathController {
             if (verificationResult != null) {
                 return verificationResult;
             }
-            
+
             if(query == null || query.isEmpty()){
                 return ResponseEntity.badRequest().body(createContentResponseUtil.basic(false, "Search query is required"));
             }
@@ -172,7 +203,7 @@ public class CoursePathController {
             return ResponseEntity.internalServerError().body(createContentResponseUtil.basic(false, "An error occurred while searching"));
         }
     }
-    */
+
 
     @PostMapping("/review")
     public ResponseEntity<Map<String,Object>> addReview(@RequestBody AddReviewRequest request){

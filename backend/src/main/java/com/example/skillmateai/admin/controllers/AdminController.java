@@ -124,8 +124,8 @@ public class AdminController {
         }
     }
 
-    @PostMapping("/users/search")
-    public ResponseEntity<Map<String, Object>> searchUserByEmail(@RequestBody SearchUserRequest request) {
+    @GetMapping("/users/search")
+    public ResponseEntity<Map<String, Object>> searchUserByEmail(@RequestParam String email) {
         try {
             // Check user verification
             ResponseEntity<Map<String, Object>> verificationResult = createAdminResponseUtil.validateUserVerification();
@@ -133,18 +133,18 @@ public class AdminController {
                 return verificationResult;
             }
             
-            if (request == null || request.getEmail() == null || request.getEmail().isBlank()) {
+            if (email == null || email.isBlank()) {
                 return ResponseEntity.badRequest()
                         .body(createAdminResponseUtil.basic(false, "Email is required"));
             }
 
             // Validate email format using MatchTextPatternUtil
-            if (!matchTextPatternUtil.isValidEmail(request.getEmail())) {
+            if (!matchTextPatternUtil.isValidEmail(email)) {
                 return ResponseEntity.badRequest()
                         .body(createAdminResponseUtil.basic(false, "Invalid email format"));
             }
 
-            UserEntity user = adminService.searchUserByEmail(request.getEmail());
+            UserEntity user = adminService.searchUserByEmail(email);
             if (user == null) {
                 return ResponseEntity.ok(createAdminResponseUtil.basic(true, "No user found with the provided email"));
             }
