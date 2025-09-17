@@ -1,0 +1,35 @@
+name: Deploy Spring Boot to Heroku
+
+on:
+  push:
+    branches:
+      - backend-and-ai  # triggers only on this branch
+
+jobs:
+  deploy-spring:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the repo
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Build Spring Boot
+      - name: Build Spring Boot
+        working-directory: backend
+        run: |
+          ./mvnw clean package -DskipTests
+
+      # 3. Deploy to Heroku
+      - name: Deploy to Heroku
+        working-directory: backend
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          git init
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git remote add heroku https://git.heroku.com/skillmate-ai-api.git
+          git add .
+          git commit -m "Deploy Spring Boot from backend-and-ai branch"
+          git push -f heroku HEAD:main
