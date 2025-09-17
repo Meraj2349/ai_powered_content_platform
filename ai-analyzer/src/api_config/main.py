@@ -3,6 +3,7 @@ Simple FastAPI server for course creation.
 Takes subject and difficulty level, returns complete course path.
 """
 
+import utils.session
 import os
 import sys
 from typing import Dict, Any, Optional
